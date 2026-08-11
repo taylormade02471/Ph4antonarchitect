@@ -80,6 +80,8 @@ test("tenant runtime files expose a Clerk-ready readiness check", async () => {
   assert.match(route, /shopId/i);
   assert.match(route, /clerkReady/i);
   assert.match(route, /shopifyInstallationReady/i);
+  assert.match(route, /activeShopifyInstallations/i);
+  assert.match(route, /installedShops/i);
 });
 
 test("Clerk-ready shell keeps public status pages and protects operator surfaces", async () => {
@@ -102,6 +104,7 @@ test("Clerk-ready shell keeps public status pages and protects operator surfaces
   assert.match(proxy, /frontendApiProxy/);
   assert.match(proxy, /api\\\/app-store\\\/readiness/);
   assert.match(proxy, /api\\\/tenancy\\\/readiness/);
+  assert.match(proxy, /api\\\/shops/);
   assert.match(proxy, /auth\.protect/);
   assert.match(layout, /ClerkProvider/);
   assert.match(layout, /isClerkConfigured/);

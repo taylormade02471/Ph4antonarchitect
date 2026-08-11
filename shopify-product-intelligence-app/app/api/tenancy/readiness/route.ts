@@ -13,12 +13,15 @@ export async function GET() {
     const tenant = await getBootstrapTenantContext();
 
     const installationRows = await sql`
-      SELECT installation_state
+      SELECT
+        installation.installation_state,
+        installation.shop_domain,
+        shop.display_name
       FROM shopify_installations
-      WHERE organization_id = ${tenant.organizationId}
-        AND shop_id = ${tenant.shopId}
-        AND installation_state = 'ACTIVE'
-      LIMIT 1
+      installation
+      JOIN merchant_shops shop ON shop.id = installation.shop_id
+      WHERE installation.installation_state = 'ACTIVE'
+      ORDER BY installation.refreshed_at DESC
     `;
 
     const approvalQueueRows = await sql`
@@ -43,6 +46,11 @@ export async function GET() {
       clerkReady: clerk.every((item) => item.ready),
       clerk,
       shopifyInstallationReady: installationRows.length > 0,
+      activeShopifyInstallations: installationRows.length,
+      installedShops: installationRows.map((row) => ({
+        shopDomain: row.shop_domain,
+        displayName: row.display_name,
+      })),
       approvalRequests: approvalQueueRows[0]?.total ?? 0,
       nextRequiredStep: clerk.every((item) => item.ready)
         ? "Wire Clerk middleware and organization membership checks."
