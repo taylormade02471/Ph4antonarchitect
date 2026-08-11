@@ -164,14 +164,16 @@ For a public Shopify App Store app that other Shopify owners can install, the
 next required layer is multi-merchant app installation. The app now includes a
 standalone OAuth install test path for Stone Wick and future stores:
 
-- `GET /api/auth?shop=stone-wick.myshopify.com`
-- `GET /api/auth/callback`
+- `GET /api/shopify/install?shop=stone-wick.myshopify.com`
+- `GET /api/shopify/callback`
+- `GET /api/shopify/installed-products?shop=stone-wick.myshopify.com&limit=10`
 - `GET /api/shops` after Clerk is configured for private operator access
 
 Shopify Partner configuration for the current Vercel deployment:
 
 - App URL: `https://shopify-product-intelligence.vercel.app`
-- Allowed redirect URL: `https://shopify-product-intelligence.vercel.app/api/auth/callback`
+- Allowed redirect URL: `https://shopify-product-intelligence.vercel.app/api/shopify/callback`
+- First-test scopes: `read_products`
 
 Important: Shopify OAuth needs the store's `myshopify.com` domain. The public
 domain `www.stone-wick.com` is not enough for OAuth unless you already know the
@@ -180,6 +182,18 @@ matching Shopify admin shop domain.
 After Shopify approval, the callback stores the encrypted offline token and
 returns to `/?installed=<shop-domain>`. Private shop-installation details stay
 behind Clerk-protected operator access.
+
+Run the harmless Stonewick product read test without exposing the secret:
+
+```powershell
+$secretLine = Get-Content .env.local | Where-Object { $_ -like "CRON_SECRET=*" } | Select-Object -First 1
+$cronSecret = $secretLine.Substring($secretLine.IndexOf("=") + 1).Trim('"')
+Invoke-RestMethod -Method GET -Uri "http://127.0.0.1:3000/api/shopify/installed-products?shop=stone-wick.myshopify.com&limit=10" -Headers @{ Authorization = "Bearer $cronSecret" }
+```
+
+This test reads products from the installed store only. It does not publish,
+change prices, change inventory, create purchases, activate ads, or make any
+other live write.
 
 Still required before public App Store listing/review:
 

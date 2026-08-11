@@ -29,7 +29,7 @@ export async function GET(request: NextRequest) {
   const state = createOAuthState();
   const clientId = requiredShopifyEnv("SHOPIFY_CLIENT_ID");
   const appOrigin = getAppOrigin(request);
-  const redirectUri = `${appOrigin}/api/auth/callback`;
+  const redirectUri = `${appOrigin}/api/shopify/callback`;
   const authorizationUrl = new URL(`https://${shop}/admin/oauth/authorize`);
 
   authorizationUrl.searchParams.set("client_id", clientId);

@@ -144,7 +144,7 @@ export default function Home() {
             </div>
 
             <form
-              action="/api/auth"
+              action="/api/shopify/install"
               className="flex flex-col gap-3 rounded-lg bg-[#f6f4ef] p-4"
               method="get"
             >

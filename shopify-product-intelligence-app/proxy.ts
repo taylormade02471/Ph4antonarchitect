@@ -7,6 +7,9 @@ const publicRoutes = [
   /^\/sign-up(?:\/.*)?$/,
   /^\/api\/auth$/,
   /^\/api\/auth\/callback$/,
+  /^\/api\/shopify\/install$/,
+  /^\/api\/shopify\/callback$/,
+  /^\/api\/shopify\/installed-products$/,
   /^\/api\/app-store\/readiness$/,
   /^\/api\/tenancy\/readiness$/,
 ];

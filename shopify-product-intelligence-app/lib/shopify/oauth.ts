@@ -7,7 +7,6 @@ const SHOPIFY_DOMAIN_PATTERN =
 
 export const SHOPIFY_OAUTH_SCOPES = [
   "read_products",
-  "write_products",
 ] as const;
 
 export type ShopifyOAuthTokenResponse = {
@@ -50,7 +49,7 @@ export function getAppOrigin(request: Request) {
     process.env.SHOPIFY_APP_URL ?? process.env.NEXT_PUBLIC_APP_URL;
 
   if (configuredHost) {
-    return configuredHost.replace(/\/$/, "");
+    return normalizeAppOrigin(configuredHost);
   }
 
   const host = request.headers.get("x-forwarded-host") ?? request.headers.get("host");
@@ -61,6 +60,28 @@ export function getAppOrigin(request: Request) {
   }
 
   return `${protocol}://${host}`;
+}
+
+function normalizeAppOrigin(value: string) {
+  const trimmed = value.trim().replace(/\/$/, "");
+
+  try {
+    const url = new URL(trimmed);
+
+    if (!["https:", "http:"].includes(url.protocol)) {
+      throw new Error("Invalid protocol");
+    }
+
+    if (url.pathname !== "/" || url.search || url.hash) {
+      throw new Error("Origin cannot include a path, query, or hash");
+    }
+
+    return url.origin;
+  } catch {
+    throw new Error(
+      "SHOPIFY_APP_URL must be a valid app origin like https://shopify-product-intelligence.vercel.app"
+    );
+  }
 }
 
 export function createOAuthState() {
@@ -118,6 +139,38 @@ export function encryptShopifyToken(token: string) {
   const authTag = cipher.getAuthTag();
 
   return Buffer.concat([iv, authTag, ciphertext]);
+}
+
+function encryptedTokenBuffer(value: Buffer | Uint8Array | string) {
+  if (typeof value !== "string") {
+    return Buffer.from(value);
+  }
+
+  if (value.startsWith("\\x")) {
+    return Buffer.from(value.slice(2), "hex");
+  }
+
+  return Buffer.from(value, "base64");
+}
+
+export function decryptShopifyToken(value: Buffer | Uint8Array | string) {
+  const encrypted = encryptedTokenBuffer(value);
+
+  if (encrypted.length <= 28) {
+    throw new Error("Stored Shopify token payload is invalid");
+  }
+
+  const iv = encrypted.subarray(0, 12);
+  const authTag = encrypted.subarray(12, 28);
+  const ciphertext = encrypted.subarray(28);
+  const decipher = crypto.createDecipheriv("aes-256-gcm", encryptionKey(), iv);
+
+  decipher.setAuthTag(authTag);
+
+  return Buffer.concat([
+    decipher.update(ciphertext),
+    decipher.final(),
+  ]).toString("utf8");
 }
 
 export function safeSlugFromShopDomain(shopDomain: string) {

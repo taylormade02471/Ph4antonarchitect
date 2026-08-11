@@ -77,17 +77,22 @@ export async function GET() {
     environment,
     oauthEnvironment,
     install: {
-      startPath: "/api/auth?shop=stone-wick.myshopify.com",
-      callbackPath: "/api/auth/callback",
+      startPath: "/api/shopify/install?shop=stone-wick.myshopify.com",
+      legacyStartPath: "/api/auth?shop=stone-wick.myshopify.com",
+      callbackPath: "/api/shopify/callback",
+      legacyCallbackPath: "/api/auth/callback",
       successPath: "/?installed=stone-wick.myshopify.com",
       installedShopsPath: "/api/shops",
+      readOnlyProductTestPath:
+        "/api/shopify/installed-products?shop=stone-wick.myshopify.com&limit=10",
       requiredPartnerAppUrl:
         process.env.SHOPIFY_APP_URL ??
         "https://shopify-product-intelligence.vercel.app",
       requiredRedirectUrl: `${
         process.env.SHOPIFY_APP_URL ??
         "https://shopify-product-intelligence.vercel.app"
-      }/api/auth/callback`,
+      }/api/shopify/callback`,
+      requiredScopes: ["read_products"],
     },
     requirements: appStoreRequirements,
     approvalBoundary: {
