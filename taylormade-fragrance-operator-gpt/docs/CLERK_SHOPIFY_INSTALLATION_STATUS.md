@@ -31,9 +31,16 @@ CLERK_SECRET_KEY
 NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY
 NEXT_PUBLIC_CLERK_SIGN_IN_URL=/sign-in
 NEXT_PUBLIC_CLERK_SIGN_UP_URL=/sign-up
+NEXT_PUBLIC_CLERK_PROXY_URL=https://shopify-product-intelligence.vercel.app/__clerk
+CLERK_PROXY_URL=https://shopify-product-intelligence.vercel.app/__clerk
 ```
 
 Do not place Clerk secret keys, Shopify tokens, database URLs, cron secrets, supplier credentials, customer data, or payment data in GPT knowledge or GitHub source files.
+
+For the current `vercel.app` production domain, Clerk Domains uses the proxy URL
+`https://shopify-product-intelligence.vercel.app/__clerk`. Keep the
+`/__clerk/:path*` matcher in the Next.js proxy and never protect that path with
+tenant auth.
 
 ## Public View Rule
 

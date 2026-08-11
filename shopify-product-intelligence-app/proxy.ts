@@ -3,6 +3,7 @@ import { NextResponse } from "next/server";
 
 const publicRoutes = [
   /^\/$/,
+  /^\/__clerk(?:\/.*)?$/,
   /^\/sign-in(?:\/.*)?$/,
   /^\/sign-up(?:\/.*)?$/,
   /^\/api\/auth$/,
@@ -52,6 +53,7 @@ export default isClerkConfigured
 
 export const config = {
   matcher: [
+    "/__clerk/:path*",
     "/((?!_next|[^?]*\\.(?:html?|css|js(?!on)|jpe?g|webp|png|gif|svg|ttf|woff2?|ico|csv|docx?|xlsx?|zip|webmanifest)).*)",
     "/(api)(.*)",
   ],

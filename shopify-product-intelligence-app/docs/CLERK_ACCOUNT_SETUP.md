@@ -90,7 +90,13 @@ CLERK_SECRET_KEY=<from Clerk dashboard, server-side only>
 NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=<from Clerk dashboard, client-safe>
 NEXT_PUBLIC_CLERK_SIGN_IN_URL=/sign-in
 NEXT_PUBLIC_CLERK_SIGN_UP_URL=/sign-up
+NEXT_PUBLIC_CLERK_PROXY_URL=https://shopify-product-intelligence.vercel.app/__clerk
+CLERK_PROXY_URL=https://shopify-product-intelligence.vercel.app/__clerk
 ```
+
+For the current `vercel.app` production domain, Clerk's Domains screen asks the
+app to proxy Clerk through `/__clerk`. The Next.js `proxy.ts` matcher must keep
+`/__clerk/:path*` included and unprotected so Clerk can verify the proxy.
 
 Never commit real values. Never paste the secret key into GPT knowledge.
 
