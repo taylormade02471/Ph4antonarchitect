@@ -8,6 +8,20 @@ const clerkEnvironment = [
   "NEXT_PUBLIC_CLERK_SIGN_UP_URL",
 ];
 
+function hasValidClerkValue(value: string | undefined) {
+  return Boolean(value && !value.includes("...") && !value.includes("…"));
+}
+
+function isExpectedClerkKey(name: string, value: string | undefined) {
+  if (!hasValidClerkValue(value)) return false;
+  if (name === "CLERK_SECRET_KEY") return value?.startsWith("sk_") ?? false;
+  if (name === "NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY") {
+    return value?.startsWith("pk_") ?? false;
+  }
+
+  return true;
+}
+
 export async function GET() {
   try {
     const tenant = await getBootstrapTenantContext();
@@ -31,10 +45,17 @@ export async function GET() {
         AND (shop_id = ${tenant.shopId} OR shop_id IS NULL)
     `;
 
-    const clerk = clerkEnvironment.map((name) => ({
-      name,
-      ready: Boolean(process.env[name]),
-    }));
+    const clerk = clerkEnvironment.map((name) => {
+      const value = process.env[name];
+
+      return {
+        name,
+        ready: Boolean(value),
+        valid: isExpectedClerkKey(name, value),
+        hasEllipsis: value?.includes("...") || value?.includes("…") || false,
+      };
+    });
+    const clerkReady = clerk.every((item) => item.ready && item.valid);
 
     return Response.json({
       status: "ok",
@@ -43,7 +64,7 @@ export async function GET() {
       organizationSlug: tenant.organizationSlug,
       shopId: tenant.shopId,
       shopDomain: tenant.shopDomain,
-      clerkReady: clerk.every((item) => item.ready),
+      clerkReady,
       clerk,
       shopifyInstallationReady: installationRows.length > 0,
       activeShopifyInstallations: installationRows.length,
@@ -52,9 +73,9 @@ export async function GET() {
         displayName: row.display_name,
       })),
       approvalRequests: approvalQueueRows[0]?.total ?? 0,
-      nextRequiredStep: clerk.every((item) => item.ready)
+      nextRequiredStep: clerkReady
         ? "Wire Clerk middleware and organization membership checks."
-        : "Create the Clerk application and add project-scoped Clerk environment variables.",
+        : "Replace malformed Clerk environment variables without shortened ellipsis values.",
     });
   } catch (error) {
     return Response.json(

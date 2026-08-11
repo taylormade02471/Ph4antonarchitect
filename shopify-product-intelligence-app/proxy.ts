@@ -16,10 +16,26 @@ const publicRoutes = [
   /^\/api\/tenancy\/readiness$/,
 ];
 
-const isClerkConfigured = Boolean(
-  process.env.CLERK_SECRET_KEY &&
-    process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY
-);
+function hasValidClerkValue(value: string | undefined) {
+  return Boolean(value && !value.includes("...") && !value.includes("…"));
+}
+
+function hasValidClerkConfiguration() {
+  const secretKey = process.env.CLERK_SECRET_KEY;
+  const publishableKey = process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY;
+  const proxyUrl =
+    process.env.CLERK_PROXY_URL ?? process.env.NEXT_PUBLIC_CLERK_PROXY_URL;
+
+  return (
+    hasValidClerkValue(secretKey) &&
+    hasValidClerkValue(publishableKey) &&
+    secretKey?.startsWith("sk_") &&
+    publishableKey?.startsWith("pk_") &&
+    (!proxyUrl || hasValidClerkValue(proxyUrl))
+  );
+}
+
+const isClerkConfigured = hasValidClerkConfiguration();
 
 function isPublicPath(pathname: string) {
   return publicRoutes.some((pattern) => pattern.test(pathname));
