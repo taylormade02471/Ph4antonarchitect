@@ -1,4 +1,5 @@
 import { clerkMiddleware } from "@clerk/nextjs/server";
+import { NextResponse } from "next/server";
 
 const publicRoutes = [
   /^\/$/,
@@ -15,17 +16,21 @@ const isClerkConfigured = Boolean(
     process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY
 );
 
-export default clerkMiddleware(async (auth, request) => {
-  const isPublicRoute = publicRoutes.some((pattern) =>
-    pattern.test(request.nextUrl.pathname)
-  );
+const openProxy = () => NextResponse.next();
 
-  if (!isClerkConfigured || isPublicRoute) {
-    return;
-  }
+export default isClerkConfigured
+  ? clerkMiddleware(async (auth, request) => {
+      const isPublicRoute = publicRoutes.some((pattern) =>
+        pattern.test(request.nextUrl.pathname)
+      );
 
-  await auth.protect();
-});
+      if (isPublicRoute) {
+        return;
+      }
+
+      await auth.protect();
+    })
+  : openProxy;
 
 export const config = {
   matcher: [
