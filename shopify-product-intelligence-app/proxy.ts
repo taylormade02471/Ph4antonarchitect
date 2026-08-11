@@ -16,15 +16,30 @@ const isClerkConfigured = Boolean(
     process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY
 );
 
-const openProxy = () => NextResponse.next();
+function isPublicPath(pathname: string) {
+  return publicRoutes.some((pattern) => pattern.test(pathname));
+}
+
+const openProxy = (request: Request) => {
+  const pathname = new URL(request.url).pathname;
+
+  if (isPublicPath(pathname)) {
+    return NextResponse.next();
+  }
+
+  return NextResponse.json(
+    {
+      status: "error",
+      message:
+        "Operator authentication is not configured. Set Clerk environment variables before accessing private routes.",
+    },
+    { status: 503 }
+  );
+};
 
 export default isClerkConfigured
   ? clerkMiddleware(async (auth, request) => {
-      const isPublicRoute = publicRoutes.some((pattern) =>
-        pattern.test(request.nextUrl.pathname)
-      );
-
-      if (isPublicRoute) {
+      if (isPublicPath(request.nextUrl.pathname)) {
         return;
       }
 
