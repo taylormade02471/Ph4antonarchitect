@@ -4,6 +4,7 @@ import { sql } from "@/lib/db";
 import {
   displayNameFromShopDomain,
   encryptShopifyToken,
+  isStoneWickShopDomain,
   normalizeShopDomain,
   requiredShopifyEnv,
   safeSlugFromShopDomain,
@@ -117,8 +118,9 @@ export async function GET(request: NextRequest) {
     const shopIdentity = await fetchShopIdentity(shop, tokenResponse.access_token!);
     const canonicalShop = normalizeShopDomain(shopIdentity.myshopifyDomain);
     const slug = safeSlugFromShopDomain(canonicalShop);
+    const isStoneWick = isStoneWickShopDomain(canonicalShop);
     const organizationName =
-      canonicalShop === "stone-wick.myshopify.com"
+      isStoneWick
         ? "Stone Wick"
         : shopIdentity.name || displayNameFromShopDomain(canonicalShop);
     const encryptedToken = encryptShopifyToken(tokenResponse.access_token!);
@@ -136,7 +138,7 @@ export async function GET(request: NextRequest) {
       VALUES (
         ${slug},
         ${organizationName},
-        ${canonicalShop === "stone-wick.myshopify.com"},
+        ${isStoneWick},
         'CONFIDENTIAL'
       )
       ON CONFLICT (slug)

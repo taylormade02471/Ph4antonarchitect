@@ -5,6 +5,11 @@ import crypto from "node:crypto";
 const SHOPIFY_DOMAIN_PATTERN =
   /^[a-z0-9][a-z0-9-]*\.myshopify\.com$/i;
 
+const STONE_WICK_SHOP_DOMAINS = new Set([
+  "stonewick-store.myshopify.com",
+  "jnb17f-fb.myshopify.com",
+]);
+
 export const SHOPIFY_OAUTH_SCOPES = [
   "read_products",
 ] as const;
@@ -37,7 +42,7 @@ export function normalizeShopDomain(input: string) {
 
   if (!SHOPIFY_DOMAIN_PATTERN.test(value)) {
     throw new Error(
-      "Shop must be a valid myshopify.com domain, such as stone-wick.myshopify.com"
+      "Shop must be a valid myshopify.com domain, such as stonewick-store.myshopify.com"
     );
   }
 
@@ -193,4 +198,8 @@ export function displayNameFromShopDomain(shopDomain: string) {
     .filter(Boolean)
     .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
     .join(" ");
+}
+
+export function isStoneWickShopDomain(shopDomain: string) {
+  return STONE_WICK_SHOP_DOMAINS.has(normalizeShopDomain(shopDomain));
 }

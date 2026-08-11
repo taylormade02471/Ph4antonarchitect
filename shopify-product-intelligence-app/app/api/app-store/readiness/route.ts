@@ -77,14 +77,14 @@ export async function GET() {
     environment,
     oauthEnvironment,
     install: {
-      startPath: "/api/shopify/install?shop=stone-wick.myshopify.com",
-      legacyStartPath: "/api/auth?shop=stone-wick.myshopify.com",
+      startPath: "/api/shopify/install?shop=stonewick-store.myshopify.com",
+      legacyStartPath: "/api/auth?shop=stonewick-store.myshopify.com",
       callbackPath: "/api/shopify/callback",
       legacyCallbackPath: "/api/auth/callback",
-      successPath: "/?installed=stone-wick.myshopify.com",
+      successPath: "/?installed=stonewick-store.myshopify.com",
       installedShopsPath: "/api/shops",
       readOnlyProductTestPath:
-        "/api/shopify/installed-products?shop=stone-wick.myshopify.com&limit=10",
+        "/api/shopify/installed-products?shop=stonewick-store.myshopify.com&limit=10",
       requiredPartnerAppUrl:
         process.env.SHOPIFY_APP_URL ??
         "https://shopify-product-intelligence.vercel.app",
@@ -93,6 +93,8 @@ export async function GET() {
         "https://shopify-product-intelligence.vercel.app"
       }/api/shopify/callback`,
       requiredScopes: ["read_products"],
+      shopifyDashboardHostRule:
+        "Application URL and redirect URL must use the same host: shopify-product-intelligence.vercel.app",
     },
     requirements: appStoreRequirements,
     approvalBoundary: {

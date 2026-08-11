@@ -10,6 +10,8 @@ test("Shopify OAuth helper validates shop, state, HMAC, and token encryption", a
 
   assert.match(helper, /normalizeShopDomain/);
   assert.match(helper, /\.myshopify\.com/);
+  assert.match(helper, /stonewick-store\.myshopify\.com/);
+  assert.match(helper, /isStoneWickShopDomain/);
   assert.match(helper, /verifyShopifyHmac/);
   assert.match(helper, /timingSafeEqual/);
   assert.match(helper, /createOAuthState/);
@@ -81,6 +83,6 @@ test("public shell exposes Shopify OAuth install without exposing token data", a
   assert.match(proxy, /api\\\/shopify\\\/callback/);
   assert.match(proxy, /api\\\/shopify\\\/installed-products/);
   assert.match(page, /Start secure Shopify install/);
-  assert.match(page, /stone-wick\.myshopify\.com/);
+  assert.match(page, /stonewick-store\.myshopify\.com/);
   assert.doesNotMatch(shopsRoute, /access_token_encrypted/i);
 });

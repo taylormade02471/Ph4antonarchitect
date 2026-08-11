@@ -56,3 +56,26 @@ The app is not ready for outside merchant Shopify installation until all of this
 - Every protected endpoint verifies the authenticated tenant before reading or writing private data.
 
 Until then, treat the app as a TaylorMade operator backend with a public status page, not a public Shopify App Store product.
+
+## Stonewick Private Install Values
+
+Use these values for the private Stonewick install test:
+
+```text
+Application URL:
+https://shopify-product-intelligence.vercel.app
+
+Allowed redirect URL:
+https://shopify-product-intelligence.vercel.app/api/shopify/callback
+
+Install URL:
+https://shopify-product-intelligence.vercel.app/api/shopify/install?shop=stonewick-store.myshopify.com
+
+Scopes:
+read_products
+```
+
+Do not use the public storefront URL `www.stone-wick.com` as the Shopify app
+Application URL for this OAuth flow. Shopify requires the Application URL host
+to match the redirect URL host. Stonewick should remain on Shopify as a
+storefront unless the user explicitly approves a DNS/domain change.

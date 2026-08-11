@@ -117,6 +117,38 @@ Important app endpoints:
 - `GET /sign-in`
 - `GET /sign-up`
 
+## Stonewick Private Shopify Install Status
+
+Stonewick should remain on Shopify as the public storefront. Do not move,
+delete, or repoint Stonewick storefront DNS without explicit user approval.
+
+Use the Shopify admin handle supplied by the user:
+
+- Admin URL: `https://admin.shopify.com/store/stonewick-store`
+- OAuth shop domain: `stonewick-store.myshopify.com`
+- Shopify also redirected one OAuth attempt through internal store handle `jnb17f-fb`; treat `jnb17f-fb.myshopify.com` as a possible Stonewick identity returned by Shopify, but start installs with `stonewick-store.myshopify.com`.
+
+The Shopify Dev Dashboard app must use matching hosts:
+
+- Application URL: `https://shopify-product-intelligence.vercel.app`
+- Allowed redirect URL: `https://shopify-product-intelligence.vercel.app/api/shopify/callback`
+- First-test scopes: `read_products`
+
+Do not use `www.stone-wick.com`, `stone-wick.com`, `example.com`, or a Vercel
+preview URL as the Shopify Dev Dashboard Application URL for this install flow.
+Shopify returns `Oauth error invalid_request: The redirect_uri and application
+url must have matching hosts` when the dashboard host and callback host do not
+match.
+
+Private install URL:
+
+`https://shopify-product-intelligence.vercel.app/api/shopify/install?shop=stonewick-store.myshopify.com`
+
+Stop at any Shopify install approval, billing, permission, login, MFA, passkey,
+or account-confirmation screen unless the user explicitly tells you to proceed.
+The first install test is read-only and must not publish, change prices, change
+inventory, buy products/components, activate ads, or perform fulfillment work.
+
 ## Shopify Public App Boundary
 
 The current app can run TaylorMade Fragrance operations, but it should not be represented as a finished public Shopify App Store app yet.

@@ -139,7 +139,7 @@ export default function Home() {
                 Enter the store&apos;s <code>myshopify.com</code> domain to
                 start Shopify OAuth. Stone Wick&apos;s public site is
                 <code> www.stone-wick.com</code>, but OAuth needs the Shopify
-                admin shop domain, such as <code>stone-wick.myshopify.com</code>.
+                admin shop domain, such as <code>stonewick-store.myshopify.com</code>.
               </p>
             </div>
 
@@ -158,7 +158,7 @@ export default function Home() {
                 className="rounded-md border border-[#cfc7b7] bg-white px-3 py-2 text-sm text-[#181916] outline-none transition focus:border-[#887d63] focus:ring-2 focus:ring-[#d8d2c4]"
                 id="shop"
                 name="shop"
-                placeholder="stone-wick.myshopify.com"
+                placeholder="stonewick-store.myshopify.com"
                 type="text"
               />
               <button

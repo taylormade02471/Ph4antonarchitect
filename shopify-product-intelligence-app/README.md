@@ -164,9 +164,9 @@ For a public Shopify App Store app that other Shopify owners can install, the
 next required layer is multi-merchant app installation. The app now includes a
 standalone OAuth install test path for Stone Wick and future stores:
 
-- `GET /api/shopify/install?shop=stone-wick.myshopify.com`
+- `GET /api/shopify/install?shop=stonewick-store.myshopify.com`
 - `GET /api/shopify/callback`
-- `GET /api/shopify/installed-products?shop=stone-wick.myshopify.com&limit=10`
+- `GET /api/shopify/installed-products?shop=stonewick-store.myshopify.com&limit=10`
 - `GET /api/shops` after Clerk is configured for private operator access
 
 Shopify Partner configuration for the current Vercel deployment:
@@ -174,6 +174,11 @@ Shopify Partner configuration for the current Vercel deployment:
 - App URL: `https://shopify-product-intelligence.vercel.app`
 - Allowed redirect URL: `https://shopify-product-intelligence.vercel.app/api/shopify/callback`
 - First-test scopes: `read_products`
+- Stonewick install domain: `stonewick-store.myshopify.com`
+
+Shopify requires the Application URL host and redirect URL host to match. Do
+not use `www.stone-wick.com`, `stone-wick.com`, a preview deployment, or an
+`example.com` placeholder in the Shopify Dev Dashboard app URLs.
 
 Important: Shopify OAuth needs the store's `myshopify.com` domain. The public
 domain `www.stone-wick.com` is not enough for OAuth unless you already know the
@@ -188,7 +193,7 @@ Run the harmless Stonewick product read test without exposing the secret:
 ```powershell
 $secretLine = Get-Content .env.local | Where-Object { $_ -like "CRON_SECRET=*" } | Select-Object -First 1
 $cronSecret = $secretLine.Substring($secretLine.IndexOf("=") + 1).Trim('"')
-Invoke-RestMethod -Method GET -Uri "http://127.0.0.1:3000/api/shopify/installed-products?shop=stone-wick.myshopify.com&limit=10" -Headers @{ Authorization = "Bearer $cronSecret" }
+Invoke-RestMethod -Method GET -Uri "http://127.0.0.1:3000/api/shopify/installed-products?shop=stonewick-store.myshopify.com&limit=10" -Headers @{ Authorization = "Bearer $cronSecret" }
 ```
 
 This test reads products from the installed store only. It does not publish,
