@@ -136,10 +136,11 @@ export default function Home() {
                 Add Stone Wick or another Shopify store
               </h2>
               <p className="mt-3 text-sm leading-6 text-[#5d594e]">
-                Enter the store&apos;s <code>myshopify.com</code> domain to
-                start Shopify OAuth. Stone Wick&apos;s public site is
-                <code> www.stone-wick.com</code>, but OAuth needs the Shopify
-                admin shop domain, such as <code>stonewick-store.myshopify.com</code>.
+                Enter the store&apos;s <code>myshopify.com</code> domain,
+                Shopify admin store URL, or known storefront URL to start
+                Shopify OAuth. Stone Wick&apos;s public site
+                <code> www.stone-wick.com</code> resolves to
+                <code> stonewick-store.myshopify.com</code> for installation.
               </p>
             </div>
 
@@ -158,7 +159,7 @@ export default function Home() {
                 className="rounded-md border border-[#cfc7b7] bg-white px-3 py-2 text-sm text-[#181916] outline-none transition focus:border-[#887d63] focus:ring-2 focus:ring-[#d8d2c4]"
                 id="shop"
                 name="shop"
-                placeholder="stonewick-store.myshopify.com"
+                placeholder="stonewick-store.myshopify.com or admin.shopify.com/store/stonewick-store"
                 type="text"
               />
               <button

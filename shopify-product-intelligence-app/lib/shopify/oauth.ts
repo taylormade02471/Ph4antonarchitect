@@ -10,6 +10,15 @@ const STONE_WICK_SHOP_DOMAINS = new Set([
   "jnb17f-fb.myshopify.com",
 ]);
 
+const SHOPIFY_ADMIN_HOST = "admin.shopify.com";
+
+const SHOP_DOMAIN_ALIASES = new Map<string, string>([
+  ["stone-wick.com", "stonewick-store.myshopify.com"],
+  ["www.stone-wick.com", "stonewick-store.myshopify.com"],
+  ["stonewick-store", "stonewick-store.myshopify.com"],
+  ["stone-wick", "stonewick-store.myshopify.com"],
+]);
+
 export const SHOPIFY_OAUTH_SCOPES = [
   "read_products",
 ] as const;
@@ -32,9 +41,26 @@ export function requiredShopifyEnv(name: string) {
 export function normalizeShopDomain(input: string) {
   let value = input.trim().toLowerCase();
 
-  value = value.replace(/^https?:\/\//, "");
-  value = value.split("/")[0] ?? "";
-  value = value.split("?")[0] ?? "";
+  try {
+    const url = new URL(value.startsWith("http") ? value : `https://${value}`);
+
+    if (url.hostname === SHOPIFY_ADMIN_HOST) {
+      const [, section, shopSlug] = url.pathname.split("/");
+
+      if (section === "store" && shopSlug) {
+        value = shopSlug;
+      }
+    } else {
+      value = url.hostname;
+    }
+  } catch {
+    value = value.replace(/^https?:\/\//, "");
+    value = value.split("/")[0] ?? "";
+    value = value.split("?")[0] ?? "";
+  }
+
+  value = value.replace(/^www\./, "");
+  value = SHOP_DOMAIN_ALIASES.get(value) ?? value;
 
   if (!value.endsWith(".myshopify.com") && /^[a-z0-9][a-z0-9-]*$/i.test(value)) {
     value = `${value}.myshopify.com`;
@@ -42,7 +68,7 @@ export function normalizeShopDomain(input: string) {
 
   if (!SHOPIFY_DOMAIN_PATTERN.test(value)) {
     throw new Error(
-      "Shop must be a valid myshopify.com domain, such as stonewick-store.myshopify.com"
+      "Shop must be a valid myshopify.com domain or Shopify admin store URL, such as stonewick-store.myshopify.com"
     );
   }
 
@@ -189,7 +215,7 @@ export function safeSlugFromShopDomain(shopDomain: string) {
 export function displayNameFromShopDomain(shopDomain: string) {
   const slug = safeSlugFromShopDomain(shopDomain);
 
-  if (slug === "stone-wick") {
+  if (slug === "stone-wick" || slug === "stonewick-store") {
     return "Stone Wick";
   }
 
