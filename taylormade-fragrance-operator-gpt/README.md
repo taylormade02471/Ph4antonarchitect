@@ -47,6 +47,16 @@ The local source file used to build that copy was:
 C:\Users\kylet\Documents\Codex\2026-08-08\skill-creator-c-users-kylet-codex-3\outputs\shopify-product-intelligence\taylormade-fragrance-gpt-operator-handoff.md
 ```
 
+## Clerk And Shopify Status File
+
+The current private-login and Shopify-installation boundary is included at:
+
+```text
+docs/CLERK_SHOPIFY_INSTALLATION_STATUS.md
+```
+
+Upload it as a second GPT knowledge file when the GPT needs to understand Clerk readiness, public-view limits, and Shopify installation readiness.
+
 ## Validate
 
 From the repository folder:
@@ -68,9 +78,10 @@ PASS: required repository files are present.
 3. Use the values in `gpt/config.json`.
 4. Paste `gpt/instructions.md` into the GPT Instructions field.
 5. Upload `knowledge/taylormade-fragrance-gpt-operator-handoff.md` as GPT knowledge.
-6. Enable only the capabilities you actually need.
-7. Test approval gates before enabling any external actions.
-8. Keep credentials, API keys, Shopify tokens, supplier secrets, and customer private data out of this repository.
+6. Upload `docs/CLERK_SHOPIFY_INSTALLATION_STATUS.md` as GPT knowledge if the GPT needs app-login/install status.
+7. Enable only the capabilities you actually need.
+8. Test approval gates before enabling any external actions.
+9. Keep credentials, API keys, Shopify tokens, supplier secrets, and customer private data out of this repository.
 
 See `docs/GPT_BUILDER_CHECKLIST.md` for the detailed verification list.
 

@@ -1,6 +1,6 @@
 # TaylorMade Fragrance GPT Operator Handoff
 
-Last updated: 2026-08-09
+Last updated: 2026-08-11
 
 This handoff is for the GPT that will operate TaylorMade Fragrance workflows across Shopify, the Shopify Product Intelligence app, suppliers, BOM/economics, product content, and Google Ads. It must prioritize safety, accuracy, and approval gates over speed.
 
@@ -83,6 +83,9 @@ Known readiness from the latest verified state:
 - Review queue endpoint exists.
 - Packaging options endpoint exists.
 - App Store readiness endpoint exists.
+- Tenancy readiness endpoint exists.
+- Tenant isolation foundation exists in the application database.
+- Clerk-ready app shell exists locally, but Clerk environment variables are not configured yet.
 - Public Shopify App Store install layer is still needed.
 
 Important app endpoints:
@@ -110,6 +113,9 @@ Important app endpoints:
 - `GET /api/opportunities/{productKey}`
 - `POST /api/pricing/recommend`
 - `GET /api/suppliers/registry`
+- `GET /api/tenancy/readiness`
+- `GET /sign-in`
+- `GET /sign-up`
 
 ## Shopify Public App Boundary
 
@@ -123,6 +129,40 @@ Still needed for a public multi-merchant app:
 - merchant-facing permissions and privacy/support links
 - billing/pricing setup if sold to Shopify owners
 - public app listing review materials
+
+## Tenant Isolation And Clerk Login Boundary
+
+Tenant isolation is mandatory before customer login.
+
+Current application state:
+
+- `organizations`, `organization_members`, `merchant_shops`, `shopify_installations`, and `approval_requests` tables exist.
+- Proprietary operational records carry `organization_id` and, where relevant, `shop_id`.
+- Existing TaylorMade data is assigned to the bootstrap TaylorMade organization/shop.
+- `GET /api/tenancy/readiness` reports tenant and Clerk readiness.
+- `@clerk/nextjs` is installed in the app.
+- `proxy.ts` is present for Next.js 16 route protection.
+- `/sign-in` and `/sign-up` pages exist.
+- Public status pages remain accessible before a Shopify store is installed.
+
+Clerk is not fully active until these project-scoped environment variables exist:
+
+- `CLERK_SECRET_KEY`
+- `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY`
+- `NEXT_PUBLIC_CLERK_SIGN_IN_URL=/sign-in`
+- `NEXT_PUBLIC_CLERK_SIGN_UP_URL=/sign-up`
+
+Clerk must be configured as restricted/invitation-only before inviting private beta users. Clerk invitations alone are not enough if ordinary signup remains open.
+
+Public view rule:
+
+- Public users may see a public landing/status surface and readiness status.
+- Public users must not see merchant product data, supplier data, BOMs, margins, scans, approvals, Shopify products, recommendations, customer data, or private files.
+- A visitor without a Shopify store can view the public page, but cannot use the operator features until they have an authenticated tenant and a connected Shopify installation.
+
+Shopify installation readiness:
+
+- The app is not ready for another merchant Shopify installation until Clerk environment variables are configured, Clerk organization membership is enforced server-side, and Shopify managed install/OAuth writes an active `shopify_installations` record for that merchant shop.
 
 ## Product Content Rules
 
@@ -599,6 +639,16 @@ When working with ads:
 - Do not activate unless budget/spend approval is explicit.
 - If Google verification appears, the user may need to complete private account verification.
 
+When working with private login and multi-store access:
+
+- Treat tenant isolation as mandatory before Clerk login.
+- Keep one reusable platform codebase, but separate every merchant by `organization_id` and every Shopify install by `shop_id`.
+- Do not hard-code the current Shopify store into future multi-merchant logic.
+- Store Shopify installations in `merchant_shops` and `shopify_installations`; do not put merchant credentials in public code or GPT files.
+- Every approval request must carry its own organization/shop owner, requester, approver, action type, payload hash, status, and timestamps.
+- Merchant data must only be retrieved for the authenticated organization at runtime.
+- Clerk should be configured as restricted/invitation-only before inviting beta users.
+
 ## Immediate Next Best Steps
 
 1. Stabilize Google Ads by creating or saving a paused Search campaign/ad group from the regular dashboard, not the unstable draft wizard.
@@ -606,6 +656,8 @@ When working with ads:
 3. Return to Shopify app work after ads are stable.
 4. Continue supplier/BOM validation with one exact product only.
 5. Keep all BUY/MAKE decisions gated until supplier cost and BOM evidence are real.
+6. Add the Clerk environment variables and verify `/api/tenancy/readiness`.
+7. Implement Shopify managed install/OAuth and create active `shopify_installations` records per shop.
 
 ## Copy-Paste Starter Prompt For GPT
 
@@ -625,5 +677,7 @@ For suppliers, separate identity authority from cost authority. Official brands 
 For economics, BUY requires exact supplier cost, stock, landed cost, margin, and supplier qualification. MAKE requires a complete verified BOM, compatible available components, producible quantity, feasible production, accurate representation, and margin. Lower MAKE cost alone is not enough.
 
 For Google Ads, use a stable dashboard or paused campaign/ad group when possible. Avoid the fragile draft wizard if it keeps dropping Ads and Keywords. Use compact safe keywords first, verify Ads and Keywords are not None, and only activate after spend approval.
+
+For private login and merchant access, treat tenant isolation as a core safety rule. Use `organization_id` and `shop_id` on proprietary records, keep Shopify installs in `merchant_shops` and `shopify_installations`, and protect approval requests per tenant. Configure Clerk as restricted/invitation-only before inviting outside users. A visitor without a Shopify store may see only the public landing/status surface, not merchant data.
 ```
 

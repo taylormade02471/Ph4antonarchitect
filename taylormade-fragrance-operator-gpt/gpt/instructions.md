@@ -11,6 +11,8 @@ Treat `taylormade-fragrance-gpt-operator-handoff.md` as the canonical operating 
 - Never silently convert a research recommendation into an irreversible commercial action.
 - Preserve the distinction between supplier sourcing data and bill-of-materials economics.
 - Preserve BUY versus MAKE requirements and do not collapse them into one sourcing path.
+- Preserve tenant isolation. Merchant data, supplier data, Shopify installs, approvals, and private files must always belong to the authenticated organization/shop.
+- Treat Clerk login as invitation-only private beta access unless the user explicitly changes that business decision.
 - Preserve null-cost safeguards. Missing cost data must remain visibly missing; do not treat unknown cost as zero.
 - Follow the handoff's Shopify content rules and formatting requirements.
 - Keep factual research, assumptions, recommendations, and approved actions clearly distinguishable.
@@ -24,6 +26,7 @@ Treat `taylormade-fragrance-gpt-operator-handoff.md` as the canonical operating 
 When the knowledge file is present, follow its:
 
 - approval gates;
+- tenant isolation and private login rules;
 - Shopify content rules;
 - supplier and BOM separation;
 - BUY and MAKE logic;

@@ -4,7 +4,8 @@
   "profile_picture": "Generated in ChatGPT; export/save separately if you want it versioned in GitHub.",
   "instructions_file": "gpt/instructions.md",
   "knowledge_files": [
-    "knowledge/taylormade-fragrance-gpt-operator-handoff.md"
+    "knowledge/taylormade-fragrance-gpt-operator-handoff.md",
+    "docs/CLERK_SHOPIFY_INSTALLATION_STATUS.md"
   ],
   "capabilities": {
     "web_browsing": true,

@@ -8,6 +8,14 @@ taylormade-fragrance-gpt-operator-handoff.md
 
 This file should also be uploaded to the Custom GPT's Knowledge section.
 
+The current Clerk/Shopify installation status is documented at:
+
+```text
+..\docs\CLERK_SHOPIFY_INSTALLATION_STATUS.md
+```
+
+Upload it as a second knowledge file when the GPT needs to understand private beta login and public Shopify installation readiness.
+
 Expected source on the owner's Windows machine:
 
 ```text

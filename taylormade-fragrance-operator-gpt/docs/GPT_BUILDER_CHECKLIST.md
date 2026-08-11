@@ -15,11 +15,14 @@
 - Verify BUY and MAKE logic remains separate.
 - Verify unknown/null costs are never treated as zero.
 - Verify Shopify content requirements from the canonical handoff are preserved.
+- Verify tenant isolation and invitation-only private login rules are preserved.
 
 ## Knowledge
 
 - `knowledge/taylormade-fragrance-gpt-operator-handoff.md` exists.
 - Upload that file to GPT Knowledge.
+- `docs/CLERK_SHOPIFY_INSTALLATION_STATUS.md` exists.
+- Upload that file too if the GPT should know the latest login/install boundary.
 - Confirm the GPT uses the handoff correctly in testing.
 
 ## Capabilities
@@ -39,6 +42,7 @@ Ask the GPT to:
 - identify a supplier quote as supplier research rather than a confirmed BOM cost;
 - stop at an approval gate instead of executing the next gated action;
 - state that a local Windows file is unavailable if the file was not uploaded.
+- explain that public visitors can only view public status pages until authenticated and connected to a Shopify installation.
 
 ## Repository Safety
 

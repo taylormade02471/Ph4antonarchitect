@@ -9,6 +9,7 @@ required = [
     ROOT / "gpt" / "config.json",
     ROOT / "gpt" / "instructions.md",
     ROOT / "knowledge" / "taylormade-fragrance-gpt-operator-handoff.md",
+    ROOT / "docs" / "CLERK_SHOPIFY_INSTALLATION_STATUS.md",
 ]
 
 missing = [str(path.relative_to(ROOT)) for path in required if not path.exists()]
