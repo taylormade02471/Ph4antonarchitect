@@ -1,0 +1,27 @@
+{
+  "name": "Fragrance Commerce Operator",
+  "description": "TaylorMade fragrance research, supplier/BOM economics, Shopify content, sourcing, review queues, and approval-gated automation.",
+  "profile_picture": "Generated in ChatGPT; export/save separately if you want it versioned in GitHub.",
+  "instructions_file": "gpt/instructions.md",
+  "knowledge_files": [
+    "knowledge/taylormade-fragrance-gpt-operator-handoff.md"
+  ],
+  "capabilities": {
+    "web_browsing": true,
+    "image_generation": true,
+    "data_analysis_python": true
+  },
+  "actions": [],
+  "prompt_starters": [
+    "Research this fragrance product and build a decision-ready sourcing brief.",
+    "Compare BUY versus MAKE economics for this product.",
+    "Draft a Shopify product page using the approved TaylorMade rules.",
+    "Audit this BOM for missing costs, supplier assumptions, and approval gates."
+  ],
+  "canonical_local_source_path": "C:\\Users\\kylet\\Documents\\Codex\\2026-08-08\\skill-creator-c-users-kylet-codex-3\\outputs\\shopify-product-intelligence\\taylormade-fragrance-gpt-operator-handoff.md",
+  "notes": [
+    "The canonical handoff is included in knowledge/taylormade-fragrance-gpt-operator-handoff.md.",
+    "Keep secrets out of Git.",
+    "Do not enable external actions until their permissions and approval behavior are reviewed."
+  ]
+}
