@@ -2,9 +2,32 @@
 
 Last updated: 2026-08-11
 
-This app is Clerk-ready, not Clerk-active. Use this checklist to create the
-Clerk account/application without exposing secrets in GitHub, GPT knowledge, or
-chat.
+This app is Clerk-created, but not fully Clerk-active in Vercel until the
+production environment variables are added. Use this checklist/status note
+without exposing secrets in GitHub, GPT knowledge, or chat.
+
+## Current Clerk Status
+
+Created on: 2026-08-11
+
+- Clerk application: `TaylorMade Fragrance Operator`
+- Clerk app id: `app_3HktZppOoWbilnS76JLh2bElnWi`
+- Development instance: `ins_3HktZoBsiaj46tiAmDQeRGzzU5j`
+- Production instance: `ins_3Hkuisc1YXgWAwmDY8aT21rMCeQ`
+- Production domain: `shopify-product-intelligence.vercel.app`
+- Development organization: `TaylorMade Fragrance` / `org_3HkubmcsFMkZvaVAq8POebPLC7F`
+- Production organization: `TaylorMade Fragrance` / `org_3Hkut2POk5YLIesQWvdI8jed949`
+
+Verified access settings:
+
+- Development restricted signup: enabled
+- Production restricted signup: enabled
+- Development organization membership: required
+- Production organization membership: required
+- Development user-created organizations: disabled
+- Production user-created organizations: disabled
+
+No Clerk secret key is stored in this repository.
 
 ## Create The Clerk Account
 
@@ -70,6 +93,12 @@ NEXT_PUBLIC_CLERK_SIGN_UP_URL=/sign-up
 ```
 
 Never commit real values. Never paste the secret key into GPT knowledge.
+
+The production setup checklist currently still needs the production keys added
+to Vercel and the first production user invited/created. The production
+publishable key is visible in Clerk's setup checklist, but the secret key must
+remain masked unless it is being copied directly into a trusted environment
+variable store.
 
 ## What Public Visitors Can See
 
