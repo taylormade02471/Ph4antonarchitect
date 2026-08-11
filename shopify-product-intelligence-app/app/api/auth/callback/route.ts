@@ -249,7 +249,7 @@ export async function GET(request: NextRequest) {
     `;
 
     const response = NextResponse.redirect(
-      new URL(`/api/shops?installed=${encodeURIComponent(canonicalShop)}`, request.url)
+      new URL(`/?installed=${encodeURIComponent(canonicalShop)}`, request.url)
     );
 
     response.cookies.delete("shopify_oauth_state");

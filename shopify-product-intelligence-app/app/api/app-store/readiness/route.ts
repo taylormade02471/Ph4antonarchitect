@@ -79,6 +79,7 @@ export async function GET() {
     install: {
       startPath: "/api/auth?shop=stone-wick.myshopify.com",
       callbackPath: "/api/auth/callback",
+      successPath: "/?installed=stone-wick.myshopify.com",
       installedShopsPath: "/api/shops",
       requiredPartnerAppUrl:
         process.env.SHOPIFY_APP_URL ??

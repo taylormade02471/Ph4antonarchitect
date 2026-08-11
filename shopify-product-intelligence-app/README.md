@@ -166,7 +166,7 @@ standalone OAuth install test path for Stone Wick and future stores:
 
 - `GET /api/auth?shop=stone-wick.myshopify.com`
 - `GET /api/auth/callback`
-- `GET /api/shops`
+- `GET /api/shops` after Clerk is configured for private operator access
 
 Shopify Partner configuration for the current Vercel deployment:
 
@@ -176,6 +176,10 @@ Shopify Partner configuration for the current Vercel deployment:
 Important: Shopify OAuth needs the store's `myshopify.com` domain. The public
 domain `www.stone-wick.com` is not enough for OAuth unless you already know the
 matching Shopify admin shop domain.
+
+After Shopify approval, the callback stores the encrypted offline token and
+returns to `/?installed=<shop-domain>`. Private shop-installation details stay
+behind Clerk-protected operator access.
 
 Still required before public App Store listing/review:
 
