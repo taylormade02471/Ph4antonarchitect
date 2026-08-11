@@ -177,6 +177,9 @@ restricted invitation-only signup, add project-scoped Clerk environment
 variables, and then wire Clerk organization membership into server-side tenant
 authorization.
 
+Use `docs/CLERK_ACCOUNT_SETUP.md` for the owner-facing Clerk dashboard values
+and public/private access boundary.
+
 ## Packaging Variant Drafts
 
 `GET /api/packaging-options` returns application packaging rules and assignments.
