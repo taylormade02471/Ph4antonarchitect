@@ -42,6 +42,11 @@ const endpoints = [
     label: "Tenant readiness",
     detail: "Checks organization, shop, Clerk, and approval isolation readiness.",
   },
+  {
+    href: "/api/shops",
+    label: "Installed shops",
+    detail: "Lists connected Shopify shops without exposing access tokens.",
+  },
 ];
 
 export const dynamic = "force-dynamic";
@@ -118,6 +123,55 @@ export default function Home() {
               <p>Tenant isolation foundation ready</p>
               <p>Public Shopify app install layer needed</p>
             </div>
+          </div>
+        </section>
+
+        <section className="rounded-lg border border-[#d8d2c4] bg-white p-5 shadow-sm">
+          <div className="grid gap-5 lg:grid-cols-[0.9fr_1.1fr]">
+            <div>
+              <p className="text-sm font-semibold uppercase tracking-[0.12em] text-[#746a54]">
+                Multi-store install
+              </p>
+              <h2 className="mt-3 text-2xl font-semibold">
+                Add Stone Wick or another Shopify store
+              </h2>
+              <p className="mt-3 text-sm leading-6 text-[#5d594e]">
+                Enter the store&apos;s <code>myshopify.com</code> domain to
+                start Shopify OAuth. Stone Wick&apos;s public site is
+                <code> www.stone-wick.com</code>, but OAuth needs the Shopify
+                admin shop domain, such as <code>stone-wick.myshopify.com</code>.
+              </p>
+            </div>
+
+            <form
+              action="/api/auth"
+              className="flex flex-col gap-3 rounded-lg bg-[#f6f4ef] p-4"
+              method="get"
+            >
+              <label
+                className="text-sm font-semibold text-[#313229]"
+                htmlFor="shop"
+              >
+                Shopify shop domain
+              </label>
+              <input
+                className="rounded-md border border-[#cfc7b7] bg-white px-3 py-2 text-sm text-[#181916] outline-none transition focus:border-[#887d63] focus:ring-2 focus:ring-[#d8d2c4]"
+                id="shop"
+                name="shop"
+                placeholder="stone-wick.myshopify.com"
+                type="text"
+              />
+              <button
+                className="rounded-md bg-[#20251f] px-4 py-2 text-sm font-semibold text-white transition hover:bg-[#30382e]"
+                type="submit"
+              >
+                Start secure Shopify install
+              </button>
+              <p className="text-xs leading-5 text-[#746a54]">
+                This creates a separate organization/shop installation record
+                and keeps Stone Wick data isolated from TaylorMade data.
+              </p>
+            </form>
           </div>
         </section>
 

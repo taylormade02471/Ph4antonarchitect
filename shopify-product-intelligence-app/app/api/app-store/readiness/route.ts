@@ -6,6 +6,13 @@ const requiredRuntimeEnv = [
   "CRON_SECRET",
 ];
 
+const oauthRuntimeEnv = [
+  "SHOPIFY_CLIENT_ID",
+  "SHOPIFY_CLIENT_SECRET",
+  "DATABASE_URL",
+  "SHOPIFY_APP_URL",
+];
+
 const appStoreRequirements = [
   {
     item: "Production Vercel deployment",
@@ -34,8 +41,9 @@ const appStoreRequirements = [
   },
   {
     item: "Managed install or OAuth",
-    status: "NEEDED",
-    detail: "A public Shopify app needs install/session handling per merchant before App Store review.",
+    status: "READY_FOR_TESTING",
+    detail:
+      "OAuth install and callback routes exist for per-shop installation testing. Shopify Partner app URLs and Vercel env vars must match before install.",
   },
   {
     item: "Embedded Shopify Admin UI",
@@ -54,13 +62,32 @@ export async function GET() {
     name,
     ready: Boolean(process.env[name]),
   }));
+  const oauthEnvironment = oauthRuntimeEnv.map((name) => ({
+    name,
+    ready: Boolean(process.env[name]),
+  }));
+  const oauthReadyForInstallTest = oauthEnvironment.every((item) => item.ready);
 
   return Response.json({
     status: "ok",
-    appMode: "single-store-operator-backend",
+    appMode: "multi-shop-oauth-ready-operator-backend",
     productionReadyForCurrentStore: environment.every((item) => item.ready),
+    oauthReadyForInstallTest,
     appStoreReadyForOtherMerchants: false,
     environment,
+    oauthEnvironment,
+    install: {
+      startPath: "/api/auth?shop=stone-wick.myshopify.com",
+      callbackPath: "/api/auth/callback",
+      installedShopsPath: "/api/shops",
+      requiredPartnerAppUrl:
+        process.env.SHOPIFY_APP_URL ??
+        "https://shopify-product-intelligence.vercel.app",
+      requiredRedirectUrl: `${
+        process.env.SHOPIFY_APP_URL ??
+        "https://shopify-product-intelligence.vercel.app"
+      }/api/auth/callback`,
+    },
     requirements: appStoreRequirements,
     approvalBoundary: {
       automatic: [

@@ -48,8 +48,16 @@ Add these Project Settings environment variables in Vercel:
 - `SHOPIFY_SHOP`
 - `SHOPIFY_CLIENT_ID`
 - `SHOPIFY_CLIENT_SECRET`
+- `SHOPIFY_APP_URL`
+- `SHOPIFY_TOKEN_ENCRYPTION_KEY`
 - `DATABASE_URL`
 - `CRON_SECRET`
+
+`SHOPIFY_APP_URL` should be the deployed app origin, for example
+`https://shopify-product-intelligence.vercel.app`. Use a dedicated random
+`SHOPIFY_TOKEN_ENCRYPTION_KEY` for encrypted offline Shopify tokens when
+available. If it is missing, the app derives an encryption key from
+`SHOPIFY_CLIENT_SECRET`, but a dedicated key is safer for rotation.
 
 ## Database Setup
 
@@ -153,16 +161,32 @@ TaylorMade Fragrance. It can read Shopify data, store intelligence in Neon,
 calculate review-queue recommendations, and keep live actions approval-gated.
 
 For a public Shopify App Store app that other Shopify owners can install, the
-next required layer is multi-merchant app installation:
+next required layer is multi-merchant app installation. The app now includes a
+standalone OAuth install test path for Stone Wick and future stores:
 
-- Shopify managed install or OAuth callback flow
-- per-shop session/token storage
+- `GET /api/auth?shop=stone-wick.myshopify.com`
+- `GET /api/auth/callback`
+- `GET /api/shops`
+
+Shopify Partner configuration for the current Vercel deployment:
+
+- App URL: `https://shopify-product-intelligence.vercel.app`
+- Allowed redirect URL: `https://shopify-product-intelligence.vercel.app/api/auth/callback`
+
+Important: Shopify OAuth needs the store's `myshopify.com` domain. The public
+domain `www.stone-wick.com` is not enough for OAuth unless you already know the
+matching Shopify admin shop domain.
+
+Still required before public App Store listing/review:
+
+- Shopify managed install or a fully reviewed embedded OAuth/session strategy
 - embedded Shopify Admin UI using Shopify App Bridge
 - merchant-facing permissions screen and privacy/support links
 - billing/pricing configuration if the app is sold
 
-Until that install layer exists, this app should not be represented as a public
-multi-merchant Shopify app. Read the status at `GET /api/app-store/readiness`.
+Until the embedded/session layer, merchant UX, billing, and listing materials
+are complete, this app should not be represented as a finished public Shopify
+App Store app. Read the status at `GET /api/app-store/readiness`.
 
 ## Private Beta Login Foundation
 

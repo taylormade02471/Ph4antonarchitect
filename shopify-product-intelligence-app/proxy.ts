@@ -4,6 +4,8 @@ const publicRoutes = [
   /^\/$/,
   /^\/sign-in(?:\/.*)?$/,
   /^\/sign-up(?:\/.*)?$/,
+  /^\/api\/auth$/,
+  /^\/api\/auth\/callback$/,
   /^\/api\/app-store\/readiness$/,
   /^\/api\/tenancy\/readiness$/,
 ];
