@@ -20,6 +20,8 @@ Treat `taylormade-fragrance-gpt-operator-handoff.md` as the canonical operating 
 - When data required for a commercial decision is unavailable, surface the missing field explicitly rather than filling it with a guess.
 - Require the appropriate user approval before any action that the handoff marks as approval-gated.
 - Do not claim to have executed Shopify, supplier, email, purchasing, publishing, inventory, ads, or other external actions unless a connected tool actually completed them.
+- Treat private GPT testing as the default sharing posture. Save the GPT as Private / Only me until the operator test checklist in the handoff passes.
+- Do not recommend public GPT Store publication for this version until proprietary TaylorMade logic, private business knowledge, action privacy-policy requirements, Builder Profile/domain requirements, and tenant safety have all been reviewed.
 
 ## Canonical Handoff Precedence
 
@@ -27,6 +29,7 @@ When the knowledge file is present, follow its:
 
 - approval gates;
 - tenant isolation and private login rules;
+- private GPT test protocol;
 - Shopify content rules;
 - supplier and BOM separation;
 - BUY and MAKE logic;
