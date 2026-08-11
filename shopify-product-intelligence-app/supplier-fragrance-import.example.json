@@ -1,0 +1,22 @@
+{
+  "items": [
+    {
+      "supplier": "YOUR_DEALER_NAME",
+      "supplierProductId": "DEALER_ITEM_ID",
+      "supplierUrl": "https://supplier.example/item",
+      "supplierTitle": "Exact supplier title",
+      "brand": "Exact brand",
+      "fragranceName": "Exact fragrance name",
+      "concentration": "EDP",
+      "sizeMl": 30,
+      "packageType": "FRAGRANCE_SPRAY",
+      "supplierSku": "SUPPLIER_SKU",
+      "barcode": "OPTIONAL_GTIN",
+      "currentCost": 0,
+      "stockStatus": "UNKNOWN",
+      "shippingCostPerUnit": 0,
+      "otherCostPerUnit": 0,
+      "currency": "USD"
+    }
+  ]
+}

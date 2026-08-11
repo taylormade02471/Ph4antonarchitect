@@ -1,0 +1,25 @@
+{
+  "items": [
+    {
+      "componentKey": "bottle-30ml-example",
+      "componentName": "30 ml bottle",
+      "componentCategory": "BOTTLE",
+      "unitOfMeasure": "EACH",
+      "supplier": "YOUR_COMPONENT_SUPPLIER",
+      "supplierItemId": "SUPPLIER_ITEM_ID",
+      "supplierDomain": "amazon.com",
+      "sellerName": "VERIFIED_SELLER_NAME",
+      "businessScore": 60,
+      "sellerVerified": true,
+      "localSeller": false,
+      "purchaseQuantity": 100,
+      "purchaseUnit": "EACH",
+      "purchasePrice": 70,
+      "usableQuantity": 98,
+      "inboundFreight": 15,
+      "taxDuty": 0,
+      "otherCost": 0,
+      "stockStatus": "UNKNOWN"
+    }
+  ]
+}
