@@ -39,8 +39,8 @@ Do not place Clerk secret keys, Shopify tokens, database URLs, cron secrets, sup
 
 For the current `vercel.app` production domain, Clerk Domains uses the proxy URL
 `https://shopify-product-intelligence.vercel.app/__clerk`. Keep the
-`/__clerk/:path*` matcher in the Next.js proxy and never protect that path with
-tenant auth.
+`/__clerk/:path*` matcher in the Next.js proxy, enable Clerk's
+`frontendApiProxy`, and never protect that path with tenant auth.
 
 ## Public View Rule
 

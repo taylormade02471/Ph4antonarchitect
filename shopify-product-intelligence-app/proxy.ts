@@ -42,13 +42,20 @@ const openProxy = (request: Request) => {
 };
 
 export default isClerkConfigured
-  ? clerkMiddleware(async (auth, request) => {
-      if (isPublicPath(request.nextUrl.pathname)) {
-        return;
-      }
+  ? clerkMiddleware(
+      async (auth, request) => {
+        if (isPublicPath(request.nextUrl.pathname)) {
+          return;
+        }
 
-      await auth.protect();
-    })
+        await auth.protect();
+      },
+      {
+        frontendApiProxy: {
+          enabled: true,
+        },
+      }
+    )
   : openProxy;
 
 export const config = {

@@ -99,6 +99,7 @@ test("Clerk-ready shell keeps public status pages and protects operator surfaces
   assert.match(proxy, /clerkMiddleware/);
   assert.match(proxy, /publicRoutes/);
   assert.match(proxy, /__clerk/);
+  assert.match(proxy, /frontendApiProxy/);
   assert.match(proxy, /api\\\/app-store\\\/readiness/);
   assert.match(proxy, /api\\\/tenancy\\\/readiness/);
   assert.match(proxy, /auth\.protect/);

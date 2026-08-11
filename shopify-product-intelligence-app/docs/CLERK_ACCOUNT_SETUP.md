@@ -95,8 +95,9 @@ CLERK_PROXY_URL=https://shopify-product-intelligence.vercel.app/__clerk
 ```
 
 For the current `vercel.app` production domain, Clerk's Domains screen asks the
-app to proxy Clerk through `/__clerk`. The Next.js `proxy.ts` matcher must keep
-`/__clerk/:path*` included and unprotected so Clerk can verify the proxy.
+app to proxy Clerk through `/__clerk`. The Next.js `proxy.ts` config must keep
+`/__clerk/:path*` in the matcher and enable Clerk's `frontendApiProxy` option so
+Clerk can verify the proxy.
 
 Never commit real values. Never paste the secret key into GPT knowledge.
 
