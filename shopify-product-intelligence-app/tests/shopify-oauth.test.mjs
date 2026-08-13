@@ -22,6 +22,7 @@ test("Shopify OAuth helper validates shop, state, HMAC, and token encryption", a
   assert.match(helper, /encryptShopifyToken/);
   assert.match(helper, /decryptShopifyToken/);
   assert.match(helper, /aes-256-gcm/);
+  assert.match(helper, /read_orders/);
   assert.match(helper, /write_products/);
 });
 
@@ -61,6 +62,10 @@ test("Shopify-named routes expose install, callback, and read-only store test", 
     new URL("../app/api/shopify/installed-products/route.ts", import.meta.url),
     "utf8"
   );
+  const installedOrdersRoute = await readFile(
+    new URL("../app/api/shopify/installed-orders/route.ts", import.meta.url),
+    "utf8"
+  );
 
   assert.match(installAlias, /api\/auth\/route/);
   assert.match(callbackAlias, /api\/auth\/callback\/route/);
@@ -69,6 +74,11 @@ test("Shopify-named routes expose install, callback, and read-only store test", 
   assert.match(installedProductsRoute, /read_products|products\(first/);
   assert.match(installedProductsRoute, /liveWrites:\s*0/);
   assert.doesNotMatch(installedProductsRoute, /mutation\s/i);
+  assert.match(installedOrdersRoute, /isCronAuthorized/);
+  assert.match(installedOrdersRoute, /decryptShopifyToken/);
+  assert.match(installedOrdersRoute, /read_orders|orders\(first/);
+  assert.match(installedOrdersRoute, /liveWrites:\s*0/);
+  assert.doesNotMatch(installedOrdersRoute, /mutation\s/i);
 });
 
 test("public shell exposes Shopify OAuth install without exposing token data", async () => {
@@ -84,6 +94,7 @@ test("public shell exposes Shopify OAuth install without exposing token data", a
   assert.match(proxy, /api\\\/shopify\\\/install/);
   assert.match(proxy, /api\\\/shopify\\\/callback/);
   assert.match(proxy, /api\\\/shopify\\\/installed-products/);
+  assert.match(proxy, /api\\\/shopify\\\/installed-orders/);
   assert.match(page, /Start secure Shopify install/);
   assert.match(page, /stonewick-store\.myshopify\.com/);
   assert.match(page, /admin\.shopify\.com\/store\/stonewick-store/);

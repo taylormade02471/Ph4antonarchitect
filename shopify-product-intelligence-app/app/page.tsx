@@ -18,6 +18,11 @@ const endpoints = [
     detail: "Reads the first 25 products and variants.",
   },
   {
+    href: "/api/shopify/installed-orders?shop=stonewick-store.myshopify.com&limit=10",
+    label: "Orders",
+    detail: "Reads recent orders from the connected Stone Wick install.",
+  },
+  {
     href: "/api/db/health",
     label: "Database health",
     detail: "Checks the persistent Neon Postgres connection.",

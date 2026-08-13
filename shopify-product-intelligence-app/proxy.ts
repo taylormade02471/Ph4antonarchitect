@@ -11,6 +11,7 @@ const publicRoutes = [
   /^\/api\/shopify\/install$/,
   /^\/api\/shopify\/callback$/,
   /^\/api\/shopify\/installed-products$/,
+  /^\/api\/shopify\/installed-orders$/,
   /^\/api\/shops$/,
   /^\/api\/app-store\/readiness$/,
   /^\/api\/tenancy\/readiness$/,

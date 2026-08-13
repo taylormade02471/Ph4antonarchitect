@@ -85,6 +85,8 @@ export async function GET() {
       installedShopsPath: "/api/shops",
       readOnlyProductTestPath:
         "/api/shopify/installed-products?shop=stonewick-store.myshopify.com&limit=10",
+      readOnlyOrderTestPath:
+        "/api/shopify/installed-orders?shop=stonewick-store.myshopify.com&limit=10",
       productContentWriteScope:
         "Required for approved one-at-a-time image, description, and media cleanup tests.",
       requiredPartnerAppUrl:
@@ -94,7 +96,7 @@ export async function GET() {
         process.env.SHOPIFY_APP_URL ??
         "https://shopify-product-intelligence.vercel.app"
       }/api/shopify/callback`,
-      requiredScopes: ["read_products", "write_products"],
+      requiredScopes: ["read_products", "read_orders", "write_products"],
       shopifyDashboardHostRule:
         "Application URL and redirect URL must use the same host: shopify-product-intelligence.vercel.app",
     },
