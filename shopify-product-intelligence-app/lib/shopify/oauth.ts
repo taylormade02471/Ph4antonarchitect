@@ -21,6 +21,7 @@ const SHOP_DOMAIN_ALIASES = new Map<string, string>([
 
 export const SHOPIFY_OAUTH_SCOPES = [
   "read_products",
+  "write_products",
 ] as const;
 
 export type ShopifyOAuthTokenResponse = {

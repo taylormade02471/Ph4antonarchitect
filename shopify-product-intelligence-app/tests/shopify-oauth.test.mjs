@@ -22,7 +22,7 @@ test("Shopify OAuth helper validates shop, state, HMAC, and token encryption", a
   assert.match(helper, /encryptShopifyToken/);
   assert.match(helper, /decryptShopifyToken/);
   assert.match(helper, /aes-256-gcm/);
-  assert.doesNotMatch(helper, /write_products/);
+  assert.match(helper, /write_products/);
 });
 
 test("Shopify OAuth routes perform secure install and callback handling", async () => {
