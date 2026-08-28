@@ -46,8 +46,11 @@ select,button{font-size:16px;padding:10px;border:1px solid #cbd5dd;border-radius
    <select id="view"></select>
   </label>
   <button id="refresh">Refresh live now</button>
+  <button id="enableLocation">Enable my location</button>
+  <button id="centerMe" disabled>Center on me</button>
  </div>
  <div id="liveStatus" class="status">Waiting for live feed…</div>
+ <div id="locationStatus" class="status">Location is off. Tap “Enable my location” and allow precise location when your phone asks.</div>
 </div>
 
 <div class="card"><div id="details"></div></div>
@@ -66,7 +69,32 @@ const esc=value=>String(value??'').replace(/[&<>"']/g,ch=>({'&':'&amp;','<':'&lt
 currentJobs.innerHTML=Object.values(D.jobs||{}).map(job=>`<div class="currentJob ${job.status==='assigned'?'ready':''}"><b>${esc(job.title||job.name)}</b><span>${esc(job.location_name||'')}</span><span>${esc(job.address)}</span><span>${job.pay_cents?'
 const map=L.map('map').setView([36.16,-86.78],11);
 L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19,attribution:'© OpenStreetMap'}).addTo(map);
-const lines=L.layerGroup().addTo(map), pins=L.layerGroup().addTo(map), busLayer=L.layerGroup().addTo(map);
+const lines=L.layerGroup().addTo(map), pins=L.layerGroup().addTo(map), busLayer=L.layerGroup().addTo(map), locationLayer=L.layerGroup().addTo(map);
+let myPosition=null,myLocationMarker=null,myAccuracyCircle=null,locationWatchId=null;
+function setLocationStatus(message){document.getElementById('locationStatus').textContent=message}
+function showLocation(position){
+ const lat=position.coords.latitude,lon=position.coords.longitude,accuracy=Math.round(position.coords.accuracy||0);
+ myPosition=[lat,lon];
+ if(myLocationMarker)locationLayer.removeLayer(myLocationMarker);
+ if(myAccuracyCircle)locationLayer.removeLayer(myAccuracyCircle);
+ myAccuracyCircle=L.circle(myPosition,{radius:accuracy,color:'#0b5fa5',weight:1,fillColor:'#0b5fa5',fillOpacity:.08}).addTo(locationLayer);
+ myLocationMarker=L.circleMarker(myPosition,{radius:9,color:'#fff',weight:3,fillColor:'#0b5fa5',fillOpacity:1}).bindPopup('<b>My live location</b><br>Accuracy about '+accuracy+' feet/meters shown by the blue circle.').addTo(locationLayer);
+ document.getElementById('centerMe').disabled=false;
+ setLocationStatus('Live location on · accuracy about '+accuracy+' m · updated '+new Date().toLocaleTimeString());
+}
+function locationError(error){
+ const messages={1:'Location permission was denied. Open this site’s permissions in Chrome and allow Location.',2:'Your phone could not determine its location.',3:'Location timed out. Move near a window and try again.'};
+ setLocationStatus(messages[error.code]||'Location is unavailable.');
+}
+function startLocation(){
+ if(!navigator.geolocation){setLocationStatus('This browser does not support location. Open the HTTPS site in Chrome.');return}
+ if(locationWatchId!==null)navigator.geolocation.clearWatch(locationWatchId);
+ setLocationStatus('Requesting precise location permission…');
+ locationWatchId=navigator.geolocation.watchPosition(showLocation,locationError,{enableHighAccuracy:true,maximumAge:5000,timeout:20000});
+}
+function centerOnMe(){if(myPosition)map.setView(myPosition,16)}
+document.getElementById('enableLocation').addEventListener('click',startLocation);
+document.getElementById('centerMe').addEventListener('click',centerOnMe);
 
 const planSel=document.getElementById('plan'),sectionSel=document.getElementById('section'),viewSel=document.getElementById('view');
 Object.keys(D.plans).forEach(n=>{let o=document.createElement('option');o.value=n;o.textContent=n;planSel.appendChild(o)});
@@ -167,6 +195,12 @@ function render(){
  let al=[];
  if(live.ok)al=live.alerts.filter(x=>(x.routes||[]).some(r=>routesUsed.has(shortFor(r))||routesUsed.has(r)));
  document.getElementById('alerts').innerHTML=al.length?al.map(x=>`<div class="alert"><b>${x.header||'WeGo alert'}</b><br>${x.description||''}</div>`).join(''):(live.ok?'<div class="alert">No current realtime alert targets the selected route piece(s).</div>':'<div class="alert">Live alert backend unavailable.</div>');
+}
+if(navigator.permissions&&navigator.permissions.query){
+ navigator.permissions.query({name:'geolocation'}).then(result=>{
+  if(result.state==='granted')startLocation();
+  else if(result.state==='denied')setLocationStatus('Location is blocked. In Chrome, open Site settings → Location → Allow.');
+ }).catch(()=>{});
 }
 planSel.addEventListener('change',fillSections);sectionSel.addEventListener('change',fillViews);viewSel.addEventListener('change',render);document.getElementById('refresh').addEventListener('click',refreshLive);
 planSel.value='Plan C — West + North/East';fillSections();refreshLive();setInterval(refreshLive,30000);
