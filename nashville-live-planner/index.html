@@ -75,7 +75,287 @@ select,button{font-size:16px;padding:10px;border:1px solid #cbd5dd;border-radius
 const D=window.PLANNER_DATA;
 const currentJobs=document.getElementById('currentJobs');
 const esc=value=>String(value??'').replace(/[&<>"']/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
-currentJobs.innerHTML=Object.values(D.jobs||{}).map(job=>`<div class="currentJob ${job.status==='assigned'?'ready':''}"><b>${esc(job.title||job.name)}</b><span>${esc(job.location_name||'')}</span><span>${esc(job.address)}</span><span>${job.pay_cents?'
+currentJobs.innerHTML=Object.values(D.jobs||{}).map(function(job){var pay=job.pay_cents?'
+const map=L.map('map').setView([36.16,-86.78],11);
+L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19,attribution:'© OpenStreetMap'}).addTo(map);
+const lines=L.layerGroup().addTo(map), pins=L.layerGroup().addTo(map), busLayer=L.layerGroup().addTo(map), locationLayer=L.layerGroup().addTo(map);
+const LOCATION_PREF_KEY='nashville_precise_location_enabled_v1';
+const MAP_SELECTION_KEY='nashville_original_map_selection_v1';
+let myPosition=null,myLocationMarker=null,myAccuracyCircle=null,locationWatchId=null,locationPromptConfirmed=false;
+function setLocationStatus(message){document.getElementById('locationStatus').textContent=message}
+function showLocation(position){
+ localStorage.setItem(LOCATION_PREF_KEY,'enabled');
+ if(locationPromptConfirmed||localStorage.getItem(LOCATION_PREF_KEY)==='enabled')document.getElementById('locationPrompt').hidden=true;
+ const lat=position.coords.latitude,lon=position.coords.longitude,accuracy=Math.round(position.coords.accuracy||0);
+ myPosition=[lat,lon];
+ if(myLocationMarker)locationLayer.removeLayer(myLocationMarker);
+ if(myAccuracyCircle)locationLayer.removeLayer(myAccuracyCircle);
+ myAccuracyCircle=L.circle(myPosition,{radius:accuracy,color:'#0b5fa5',weight:1,fillColor:'#0b5fa5',fillOpacity:.08}).addTo(locationLayer);
+ myLocationMarker=L.circleMarker(myPosition,{radius:9,color:'#fff',weight:3,fillColor:'#0b5fa5',fillOpacity:1}).bindPopup('<b>My live location</b><br>Accuracy about '+accuracy+' feet/meters shown by the blue circle.').addTo(locationLayer);
+ document.getElementById('centerMe').disabled=false;
+ setLocationStatus('Live location on · accuracy about '+accuracy+' m · updated '+new Date().toLocaleTimeString());
+}
+function locationError(error){
+ document.getElementById('locationPrompt').hidden=false;
+ const messages={1:'Location permission was denied. Open this site’s permissions in Chrome and allow Location.',2:'Your phone could not determine its location.',3:'Location timed out. Move near a window and try again.'};
+ setLocationStatus(messages[error.code]||'Location is unavailable.');
+}
+function startLocation(){
+ localStorage.setItem(LOCATION_PREF_KEY,'enabled');
+ if(!navigator.geolocation){setLocationStatus('This browser does not support location. Open the HTTPS site in Chrome.');return}
+ if(locationWatchId!==null)navigator.geolocation.clearWatch(locationWatchId);
+ setLocationStatus('Requesting precise location permission…');
+ locationWatchId=navigator.geolocation.watchPosition(showLocation,locationError,{enableHighAccuracy:true,maximumAge:5000,timeout:20000});
+}
+function centerOnMe(){if(myPosition)map.setView(myPosition,16)}
+document.getElementById('enableLocation').addEventListener('click',startLocation);
+document.getElementById('allowPreciseLocation').addEventListener('click',()=>{locationPromptConfirmed=true;startLocation()});
+document.getElementById('centerMe').addEventListener('click',centerOnMe);
+window.addEventListener('load',()=>{
+ const saved=localStorage.getItem(LOCATION_PREF_KEY)==='enabled';
+ document.getElementById('locationPrompt').hidden=saved;
+ if(saved){
+  locationPromptConfirmed=true;
+  setTimeout(startLocation,400);
+ }else{
+  setLocationStatus('Tap “Allow precise location now” to open the Android or Chrome permission request.');
+ }
+});
+
+const planSel=document.getElementById('plan'),sectionSel=document.getElementById('section'),viewSel=document.getElementById('view');
+Object.keys(D.plans).forEach(n=>{let o=document.createElement('option');o.value=n;o.textContent=n;planSel.appendChild(o)});
+
+let live={vehicles:[],trips:[],alerts:[],updatedAt:null,ok:false};
+
+function readVarint(u8,s){let val=0,shift=0;while(s.i<u8.length){const b=u8[s.i++];val+=(b&127)*Math.pow(2,shift);if(!(b&128))return val;shift+=7}return val}
+function fields(u8){let s={i:0},o=[];while(s.i<u8.length){let key=readVarint(u8,s),n=Math.floor(key/8),w=key&7,v;if(w===0)v=readVarint(u8,s);else if(w===1){v=u8.slice(s.i,s.i+8);s.i+=8}else if(w===2){let l=readVarint(u8,s);v=u8.slice(s.i,s.i+l);s.i+=l}else if(w===5){v=u8.slice(s.i,s.i+4);s.i+=4}else break;o.push([n,w,v])}return o}
+const td=new TextDecoder();const str=v=>{try{return td.decode(v)}catch{return''}};const f32=v=>new DataView(v.buffer,v.byteOffset,4).getFloat32(0,true);
+function tripDesc(u){let d={};for(const[n,w,v]of fields(u)){if(n===1&&w===2)d.trip_id=str(v);if(n===5&&w===2)d.route_id=str(v)}return d}
+function vehDesc(u){let d={};for(const[n,w,v]of fields(u)){if(n===1&&w===2)d.id=str(v);if(n===2&&w===2)d.label=str(v)}return d}
+function pos(u){let d={};for(const[n,w,v]of fields(u)){if(n===1&&w===5)d.lat=f32(v);if(n===2&&w===5)d.lon=f32(v);if(n===3&&w===5)d.bearing=f32(v)}return d}
+function parseVehicle(u){let d={};for(const[n,w,v]of fields(u)){if(n===1&&w===2)d.trip=tripDesc(v);if(n===2&&w===2)d.position=pos(v);if(n===5&&w===0)d.timestamp=v;if(n===7&&w===2)d.stop_id=str(v);if(n===8&&w===2)d.vehicle=vehDesc(v)}return d}
+function translation(u){for(const[n,w,v]of fields(u))if(n===1&&w===2)return str(v);return''}
+function translated(u){for(const[n,w,v]of fields(u))if(n===1&&w===2)return translation(v);return''}
+function selector(u){let d={};for(const[n,w,v]of fields(u)){if(n===2&&w===2)d.route_id=str(v);if(n===5&&w===2)d.stop_id=str(v)}return d}
+function alertRec(u){let d={routes:[],stops:[]};for(const[n,w,v]of fields(u)){if(n===5&&w===2){const s=selector(v);if(s.route_id)d.routes.push(s.route_id);if(s.stop_id)d.stops.push(s.stop_id)}if(n===10&&w===2)d.header=translated(v);if(n===11&&w===2)d.description=translated(v)}return d}
+function parseFeed(b64,kind){if(!b64)return[];const raw=atob(b64),u8=Uint8Array.from(raw,c=>c.charCodeAt(0)),out=[];for(const[n,w,v]of fields(u8)){if(n!==2||w!==2)continue;let payload=null;for(const[en,ew,ev]of fields(v)){if(kind==='vehicle'&&en===4&&ew===2)payload=parseVehicle(ev);if(kind==='alert'&&en===5&&ew===2)payload=alertRec(ev)}if(payload)out.push(payload)}return out}
+const shortFor=id=>D.routeIdToShort[id]||id||'';
+
+async function refreshLive(){
+ const el=document.getElementById('liveStatus');el.textContent='Refreshing official WeGo realtime feeds…';
+ try{
+  const r=await fetch('/api/wego-live?ts='+Date.now(),{cache:'no-store'});if(!r.ok)throw new Error('HTTP '+r.status);
+  const j=await r.json();live.vehicles=parseFeed(j.vehiclePositions,'vehicle');live.alerts=parseFeed(j.alerts,'alert');live.updatedAt=j.fetchedAt;live.ok=true;
+  el.textContent=`LIVE — ${live.vehicles.length} vehicles / ${live.alerts.length} alerts — refreshed ${new Date(j.fetchedAt).toLocaleTimeString()} — auto refresh 30 sec`;
+ }catch(e){live.ok=false;el.innerHTML=`Live backend unavailable (${e.message}). Static GTFS plan remains usable. <a target="_blank" href="https://www.wegotransit.com/routes/">Open WeGo live arrivals</a>`}
+ render();
+}
+
+function planSections(){return D.plans[planSel.value]||[]}
+function fillSections(){
+ sectionSel.innerHTML='';
+ const ps=planSections();let number=0;
+ ps.forEach(key=>{
+  const o=document.createElement('option');o.value=key;
+  if(key==='return')o.textContent='RETURN — Nashville → Clarksville';
+  else{o.textContent=`${++number}. ${D.sections[key].title}`}
+  sectionSel.appendChild(o);
+ });
+ fillViews();
+}
+function fillViews(){
+ viewSel.innerHTML='';
+ let o=document.createElement('option');o.value='plan-all';o.textContent='All Stops in Planned Route';viewSel.appendChild(o);
+ let s=document.createElement('option');s.value='section-all';s.textContent='All Stops in This Section';viewSel.appendChild(s);
+ const legs=D.sections[sectionSel.value]?.legs||[];
+ legs.forEach((l,i)=>{let x=document.createElement('option');x.value='leg:'+i;x.textContent=`Stop ${i+1}: ${l.label}`;viewSel.appendChild(x)});
+ render();
+}
+
+function selectedLegs(){
+ if(viewSel.value==='plan-all'){
+  let result=[];let n=0;
+  planSections().forEach(key=>{if(key!=='return')n++;(D.sections[key]?.legs||[]).forEach((l,i)=>result.push({...l,_section:key,_sectionNo:key==='return'?'RETURN':n,_legNo:i+1}))});
+  return result;
+ }
+ if(viewSel.value==='section-all'){
+  let idx=planSections().filter(k=>k!=='return').indexOf(sectionSel.value)+1;
+  return (D.sections[sectionSel.value]?.legs||[]).map((l,i)=>({...l,_section:sectionSel.value,_sectionNo:sectionSel.value==='return'?'RETURN':idx,_legNo:i+1}));
+ }
+ const i=Number(viewSel.value.split(':')[1]||0),l=D.sections[sectionSel.value]?.legs?.[i];
+ let idx=planSections().filter(k=>k!=='return').indexOf(sectionSel.value)+1;
+ return l?[{...l,_section:sectionSel.value,_sectionNo:sectionSel.value==='return'?'RETURN':idx,_legNo:i+1}]:[];
+}
+
+function render(){
+ lines.clearLayers();pins.clearLayers();busLayer.clearLayers();
+ const legs=selectedLegs(),bounds=[],routesUsed=new Set(),details=[];
+ let lastSection=null;
+ for(const l of legs){
+  if(l._section!==lastSection){details.push(`<div class="sectionTitle">${l._sectionNo}. ${D.sections[l._section].title}</div>`);lastSection=l._section}
+  const c=l.route==='walk'||l.route==='link'?'#666':(D.routeColors[l.route]||'#333');
+  if(l.route!=='walk'&&l.route!=='link'){L.polyline(l.segment,{color:c,weight:7,opacity:.9}).addTo(lines);l.segment.forEach(p=>bounds.push(p));routesUsed.add(l.route)}
+  const b=[l.board_stop.lat,l.board_stop.lon],a=[l.alight_stop.lat,l.alight_stop.lon];bounds.push(b,a);
+  L.marker(b).bindPopup(`<b>BOARD / START</b><br>${l.board_stop.name}<br>Stop ${l.board}<br>${l.label}`).addTo(pins);
+  L.marker(a).bindPopup(`<b>GET OFF / END</b><br>${l.alight_stop.name}<br>Stop ${l.alight}<br><b>Destination:</b> ${l.destination}`).addTo(pins);
+  const klass=l.label.toLowerCase().includes('route change')||l._section==='return'?'change':'leg';
+  details.push(`<div class="${klass}"><div><span class="badge" style="background:${c}">${l.route==='walk'?'WALK':l.route==='link'?'WEGO LINK':'Route '+l.route}</span><b>${l.label}</b></div><div class="row"><b>STATIC PLAN</b><span class="time">${l.static}</span></div><div class="row"><b>BOARD / START</b><span>${l.board_stop.name} [${l.board}]</span></div><div class="row"><b>GET OFF / END</b><span>${l.alight_stop.name} [${l.alight}]</span></div><div class="row"><b>DESTINATION</b><span>${l.destination}</span></div></div>`);
+ }
+ document.getElementById('details').innerHTML=details.join('')||'No route selected.';
+ if(bounds.length)map.fitBounds(bounds,{padding:[35,35]});
+
+ let busRows=[];
+ if(live.ok){
+  for(const v of live.vehicles){
+   const sr=shortFor(v.trip?.route_id);
+   if(routesUsed.has(sr)&&v.position?.lat!=null){
+    L.circleMarker([v.position.lat,v.position.lon],{radius:9,color:'#000',weight:2,fillColor:'#ffb000',fillOpacity:.95})
+     .bindPopup(`<b>ACTUAL LIVE WEGO BUS</b><br>${v.vehicle?.label||v.vehicle?.id||'Vehicle'}<br>Route ${sr}<br>${v.stop_id?'Current/next stop '+v.stop_id+'<br>':''}${v.timestamp?'Feed time '+new Date(v.timestamp*1000).toLocaleTimeString():''}`)
+     .addTo(busLayer);
+    busRows.push(`<div class="bus"><b>${v.vehicle?.label||v.vehicle?.id||'Bus'}</b> — actual live Route ${sr}${v.stop_id?' • stop '+v.stop_id:''}</div>`);
+   }
+  }
+ }
+ document.getElementById('buses').innerHTML=busRows.length?busRows.join(''):(live.ok?'<div class="bus">No current live vehicle is explicitly assigned to the selected route piece(s).</div>':'<div class="bus">Live backend unavailable; no stale snapshot is substituted.</div>');
+
+ let al=[];
+ if(live.ok)al=live.alerts.filter(x=>(x.routes||[]).some(r=>routesUsed.has(shortFor(r))||routesUsed.has(r)));
+ document.getElementById('alerts').innerHTML=al.length?al.map(x=>`<div class="alert"><b>${x.header||'WeGo alert'}</b><br>${x.description||''}</div>`).join(''):(live.ok?'<div class="alert">No current realtime alert targets the selected route piece(s).</div>':'<div class="alert">Live alert backend unavailable.</div>');
+}
+if(navigator.permissions&&navigator.permissions.query){
+ navigator.permissions.query({name:'geolocation'}).then(result=>{
+  if(result.state==='granted')startLocation();
+  else if(result.state==='denied')setLocationStatus('Location is blocked. In Chrome, open Site settings → Location → Allow.');
+ }).catch(()=>{});
+}
+function saveMapSelection(){
+ localStorage.setItem(MAP_SELECTION_KEY,JSON.stringify({plan:planSel.value,section:sectionSel.value,view:viewSel.value}));
+}
+function restoreMapSelection(){
+ try{
+  const saved=JSON.parse(localStorage.getItem(MAP_SELECTION_KEY)||'{}');
+  if(saved.plan&&Array.from(planSel.options).some(option=>option.value===saved.plan))planSel.value=saved.plan;
+  fillSections();
+  if(saved.section&&Array.from(sectionSel.options).some(option=>option.value===saved.section))sectionSel.value=saved.section;
+  fillViews();
+  if(saved.view&&Array.from(viewSel.options).some(option=>option.value===saved.view))viewSel.value=saved.view;
+ }catch{}
+ render();
+}
+planSel.addEventListener('change',()=>{fillSections();saveMapSelection()});sectionSel.addEventListener('change',()=>{fillViews();saveMapSelection()});viewSel.addEventListener('change',()=>{saveMapSelection();render()});document.getElementById('refresh').addEventListener('click',refreshLive);
+planSel.value='Plan C — West + North/East';restoreMapSelection();refreshLive();setInterval(refreshLive,30000);
+</script>
+</body>
+</html>+(job.pay_cents/100).toFixed(2):''} · ${esc(job.due||'')}</span></div>`).join('');
+const map=L.map('map').setView([36.16,-86.78],11);
+L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19,attribution:'© OpenStreetMap'}).addTo(map);
+const lines=L.layerGroup().addTo(map), pins=L.layerGroup().addTo(map), busLayer=L.layerGroup().addTo(map);
+
+const planSel=document.getElementById('plan'),sectionSel=document.getElementById('section'),viewSel=document.getElementById('view');
+Object.keys(D.plans).forEach(n=>{let o=document.createElement('option');o.value=n;o.textContent=n;planSel.appendChild(o)});
+
+let live={vehicles:[],trips:[],alerts:[],updatedAt:null,ok:false};
+
+function readVarint(u8,s){let val=0,shift=0;while(s.i<u8.length){const b=u8[s.i++];val+=(b&127)*Math.pow(2,shift);if(!(b&128))return val;shift+=7}return val}
+function fields(u8){let s={i:0},o=[];while(s.i<u8.length){let key=readVarint(u8,s),n=Math.floor(key/8),w=key&7,v;if(w===0)v=readVarint(u8,s);else if(w===1){v=u8.slice(s.i,s.i+8);s.i+=8}else if(w===2){let l=readVarint(u8,s);v=u8.slice(s.i,s.i+l);s.i+=l}else if(w===5){v=u8.slice(s.i,s.i+4);s.i+=4}else break;o.push([n,w,v])}return o}
+const td=new TextDecoder();const str=v=>{try{return td.decode(v)}catch{return''}};const f32=v=>new DataView(v.buffer,v.byteOffset,4).getFloat32(0,true);
+function tripDesc(u){let d={};for(const[n,w,v]of fields(u)){if(n===1&&w===2)d.trip_id=str(v);if(n===5&&w===2)d.route_id=str(v)}return d}
+function vehDesc(u){let d={};for(const[n,w,v]of fields(u)){if(n===1&&w===2)d.id=str(v);if(n===2&&w===2)d.label=str(v)}return d}
+function pos(u){let d={};for(const[n,w,v]of fields(u)){if(n===1&&w===5)d.lat=f32(v);if(n===2&&w===5)d.lon=f32(v);if(n===3&&w===5)d.bearing=f32(v)}return d}
+function parseVehicle(u){let d={};for(const[n,w,v]of fields(u)){if(n===1&&w===2)d.trip=tripDesc(v);if(n===2&&w===2)d.position=pos(v);if(n===5&&w===0)d.timestamp=v;if(n===7&&w===2)d.stop_id=str(v);if(n===8&&w===2)d.vehicle=vehDesc(v)}return d}
+function translation(u){for(const[n,w,v]of fields(u))if(n===1&&w===2)return str(v);return''}
+function translated(u){for(const[n,w,v]of fields(u))if(n===1&&w===2)return translation(v);return''}
+function selector(u){let d={};for(const[n,w,v]of fields(u)){if(n===2&&w===2)d.route_id=str(v);if(n===5&&w===2)d.stop_id=str(v)}return d}
+function alertRec(u){let d={routes:[],stops:[]};for(const[n,w,v]of fields(u)){if(n===5&&w===2){const s=selector(v);if(s.route_id)d.routes.push(s.route_id);if(s.stop_id)d.stops.push(s.stop_id)}if(n===10&&w===2)d.header=translated(v);if(n===11&&w===2)d.description=translated(v)}return d}
+function parseFeed(b64,kind){if(!b64)return[];const raw=atob(b64),u8=Uint8Array.from(raw,c=>c.charCodeAt(0)),out=[];for(const[n,w,v]of fields(u8)){if(n!==2||w!==2)continue;let payload=null;for(const[en,ew,ev]of fields(v)){if(kind==='vehicle'&&en===4&&ew===2)payload=parseVehicle(ev);if(kind==='alert'&&en===5&&ew===2)payload=alertRec(ev)}if(payload)out.push(payload)}return out}
+const shortFor=id=>D.routeIdToShort[id]||id||'';
+
+async function refreshLive(){
+ const el=document.getElementById('liveStatus');el.textContent='Refreshing official WeGo realtime feeds…';
+ try{
+  const r=await fetch('/api/wego-live?ts='+Date.now(),{cache:'no-store'});if(!r.ok)throw new Error('HTTP '+r.status);
+  const j=await r.json();live.vehicles=parseFeed(j.vehiclePositions,'vehicle');live.alerts=parseFeed(j.alerts,'alert');live.updatedAt=j.fetchedAt;live.ok=true;
+  el.textContent=`LIVE — ${live.vehicles.length} vehicles / ${live.alerts.length} alerts — refreshed ${new Date(j.fetchedAt).toLocaleTimeString()} — auto refresh 30 sec`;
+ }catch(e){live.ok=false;el.innerHTML=`Live backend unavailable (${e.message}). Static GTFS plan remains usable. <a target="_blank" href="https://www.wegotransit.com/routes/">Open WeGo live arrivals</a>`}
+ render();
+}
+
+function planSections(){return D.plans[planSel.value]||[]}
+function fillSections(){
+ sectionSel.innerHTML='';
+ const ps=planSections();let number=0;
+ ps.forEach(key=>{
+  const o=document.createElement('option');o.value=key;
+  if(key==='return')o.textContent='RETURN — Nashville → Clarksville';
+  else{o.textContent=`${++number}. ${D.sections[key].title}`}
+  sectionSel.appendChild(o);
+ });
+ fillViews();
+}
+function fillViews(){
+ viewSel.innerHTML='';
+ let o=document.createElement('option');o.value='plan-all';o.textContent='All Stops in Planned Route';viewSel.appendChild(o);
+ let s=document.createElement('option');s.value='section-all';s.textContent='All Stops in This Section';viewSel.appendChild(s);
+ const legs=D.sections[sectionSel.value]?.legs||[];
+ legs.forEach((l,i)=>{let x=document.createElement('option');x.value='leg:'+i;x.textContent=`Stop ${i+1}: ${l.label}`;viewSel.appendChild(x)});
+ render();
+}
+
+function selectedLegs(){
+ if(viewSel.value==='plan-all'){
+  let result=[];let n=0;
+  planSections().forEach(key=>{if(key!=='return')n++;(D.sections[key]?.legs||[]).forEach((l,i)=>result.push({...l,_section:key,_sectionNo:key==='return'?'RETURN':n,_legNo:i+1}))});
+  return result;
+ }
+ if(viewSel.value==='section-all'){
+  let idx=planSections().filter(k=>k!=='return').indexOf(sectionSel.value)+1;
+  return (D.sections[sectionSel.value]?.legs||[]).map((l,i)=>({...l,_section:sectionSel.value,_sectionNo:sectionSel.value==='return'?'RETURN':idx,_legNo:i+1}));
+ }
+ const i=Number(viewSel.value.split(':')[1]||0),l=D.sections[sectionSel.value]?.legs?.[i];
+ let idx=planSections().filter(k=>k!=='return').indexOf(sectionSel.value)+1;
+ return l?[{...l,_section:sectionSel.value,_sectionNo:sectionSel.value==='return'?'RETURN':idx,_legNo:i+1}]:[];
+}
+
+function render(){
+ lines.clearLayers();pins.clearLayers();busLayer.clearLayers();
+ const legs=selectedLegs(),bounds=[],routesUsed=new Set(),details=[];
+ let lastSection=null;
+ for(const l of legs){
+  if(l._section!==lastSection){details.push(`<div class="sectionTitle">${l._sectionNo}. ${D.sections[l._section].title}</div>`);lastSection=l._section}
+  const c=l.route==='walk'||l.route==='link'?'#666':(D.routeColors[l.route]||'#333');
+  if(l.route!=='walk'&&l.route!=='link'){L.polyline(l.segment,{color:c,weight:7,opacity:.9}).addTo(lines);l.segment.forEach(p=>bounds.push(p));routesUsed.add(l.route)}
+  const b=[l.board_stop.lat,l.board_stop.lon],a=[l.alight_stop.lat,l.alight_stop.lon];bounds.push(b,a);
+  L.marker(b).bindPopup(`<b>BOARD / START</b><br>${l.board_stop.name}<br>Stop ${l.board}<br>${l.label}`).addTo(pins);
+  L.marker(a).bindPopup(`<b>GET OFF / END</b><br>${l.alight_stop.name}<br>Stop ${l.alight}<br><b>Destination:</b> ${l.destination}`).addTo(pins);
+  const klass=l.label.toLowerCase().includes('route change')||l._section==='return'?'change':'leg';
+  details.push(`<div class="${klass}"><div><span class="badge" style="background:${c}">${l.route==='walk'?'WALK':l.route==='link'?'WEGO LINK':'Route '+l.route}</span><b>${l.label}</b></div><div class="row"><b>STATIC PLAN</b><span class="time">${l.static}</span></div><div class="row"><b>BOARD / START</b><span>${l.board_stop.name} [${l.board}]</span></div><div class="row"><b>GET OFF / END</b><span>${l.alight_stop.name} [${l.alight}]</span></div><div class="row"><b>DESTINATION</b><span>${l.destination}</span></div></div>`);
+ }
+ document.getElementById('details').innerHTML=details.join('')||'No route selected.';
+ if(bounds.length)map.fitBounds(bounds,{padding:[35,35]});
+
+ let busRows=[];
+ if(live.ok){
+  for(const v of live.vehicles){
+   const sr=shortFor(v.trip?.route_id);
+   if(routesUsed.has(sr)&&v.position?.lat!=null){
+    L.circleMarker([v.position.lat,v.position.lon],{radius:9,color:'#000',weight:2,fillColor:'#ffb000',fillOpacity:.95})
+     .bindPopup(`<b>ACTUAL LIVE WEGO BUS</b><br>${v.vehicle?.label||v.vehicle?.id||'Vehicle'}<br>Route ${sr}<br>${v.stop_id?'Current/next stop '+v.stop_id+'<br>':''}${v.timestamp?'Feed time '+new Date(v.timestamp*1000).toLocaleTimeString():''}`)
+     .addTo(busLayer);
+    busRows.push(`<div class="bus"><b>${v.vehicle?.label||v.vehicle?.id||'Bus'}</b> — actual live Route ${sr}${v.stop_id?' • stop '+v.stop_id:''}</div>`);
+   }
+  }
+ }
+ document.getElementById('buses').innerHTML=busRows.length?busRows.join(''):(live.ok?'<div class="bus">No current live vehicle is explicitly assigned to the selected route piece(s).</div>':'<div class="bus">Live backend unavailable; no stale snapshot is substituted.</div>');
+
+ let al=[];
+ if(live.ok)al=live.alerts.filter(x=>(x.routes||[]).some(r=>routesUsed.has(shortFor(r))||routesUsed.has(r)));
+ document.getElementById('alerts').innerHTML=al.length?al.map(x=>`<div class="alert"><b>${x.header||'WeGo alert'}</b><br>${x.description||''}</div>`).join(''):(live.ok?'<div class="alert">No current realtime alert targets the selected route piece(s).</div>':'<div class="alert">Live alert backend unavailable.</div>');
+}
+planSel.addEventListener('change',fillSections);sectionSel.addEventListener('change',fillViews);viewSel.addEventListener('change',render);document.getElementById('refresh').addEventListener('click',refreshLive);
+planSel.value='Plan C — West + North/East';fillSections();refreshLive();setInterval(refreshLive,30000);
+</script>
+</body>
+</html>+(job.pay_cents/100).toFixed(2):'';var ready=job.status==='assigned'?' ready':'';return '<div class="currentJob'+ready+'"><b>'+esc(job.title||job.name)+'</b><span>'+esc(job.location_name||'')+'</span><span>'+esc(job.address||'')+'</span><span>'+pay+' · '+esc(job.due||'')+'</span></div>';}).join('');
 const map=L.map('map').setView([36.16,-86.78],11);
 L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19,attribution:'© OpenStreetMap'}).addTo(map);
 const lines=L.layerGroup().addTo(map), pins=L.layerGroup().addTo(map), busLayer=L.layerGroup().addTo(map), locationLayer=L.layerGroup().addTo(map);
