@@ -36,12 +36,12 @@ select,button{font-size:16px;padding:10px;border:1px solid #cbd5dd;border-radius
 <div class="notice"><b>Original map restored:</b> use the route, itinerary section, and stop controls below for the detailed WeGo map. Live buses and alerts refresh every 30 seconds. The board contains only the latest 18 assignments.</div>
 
 <div class="card metrics">
- <div class="metric">Current jobs<strong>18</strong><span>Latest recording only</span></div>
- <div class="metric">Expires Soon<strong>17</strong><span>Needs completion</span></div>
- <div class="metric">Ready to Start<strong>1</strong><span>1015 Jefferson St</span></div>
+ <div class="metric">Current jobs<strong id="currentJobCount">0</strong><span>Newest published board</span></div>
+ <div class="metric">Needs completion<strong id="urgentJobCount">0</strong><span>Active urgent work</span></div>
+ <div class="metric">Ready to Start<strong id="readyJobCount">0</strong><span>Assigned active work</span></div>
  <div class="metric">Provider apps<strong>4</strong><span>All choices retained</span></div>
 </div>
-<div class="card"><h3>Current assignment board</h3><div id="currentJobs" class="currentJobs"></div></div>
+<div class="card"><h3>Current assignment board</h3><button id="refreshJobs" type="button">Refresh Jobs</button><span id="jobRefreshStatus" class="status">Showing the newest published active jobs.</span><div id="currentJobs" class="currentJobs"></div></div>
 
 <div class="card">
  <div class="controls">
@@ -76,6 +76,16 @@ const D=window.PLANNER_DATA;
 const currentJobs=document.getElementById('currentJobs');
 const esc=value=>String(value??'').replace(/[&<>"']/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
 currentJobs.innerHTML=Object.values(D.jobs||{}).map(function(job){var pay=job.pay_cents?String.fromCharCode(36)+(job.pay_cents/100).toFixed(2):'';var ready=job.status==='assigned'?' ready':'';return '<div class="currentJob'+ready+'"><b>'+esc(job.title||job.name)+'</b><span>'+esc(job.location_name||'')+'</span><span>'+esc(job.address||'')+'</span><span>'+pay+' · '+esc(job.due||'')+'</span></div>';}).join('');
+const currentJobValues=Object.values(D.jobs||{});
+document.getElementById('currentJobCount').textContent=String(currentJobValues.length);
+document.getElementById('urgentJobCount').textContent=String(currentJobValues.filter(job=>job.status==='needs_completion').length);
+document.getElementById('readyJobCount').textContent=String(currentJobValues.filter(job=>job.status==='assigned').length);
+document.getElementById('refreshJobs').addEventListener('click',()=>{
+ document.getElementById('jobRefreshStatus').textContent='Refreshing current jobs…';
+ const url=new URL(window.location.href);
+ url.searchParams.set('jobsRefresh',String(Date.now()));
+ window.location.replace(url.toString());
+});
 const map=L.map('map').setView([36.16,-86.78],11);
 L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19,attribution:'© OpenStreetMap'}).addTo(map);
 const lines=L.layerGroup().addTo(map), pins=L.layerGroup().addTo(map), busLayer=L.layerGroup().addTo(map), locationLayer=L.layerGroup().addTo(map);
