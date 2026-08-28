@@ -19,9 +19,18 @@ select,button{font-size:16px;padding:10px;border:1px solid #cbd5dd;border-radius
 .bus,.alert{padding:8px;border:1px solid #dce3e8;border-radius:8px;margin:5px 0;font-size:13px}.alert{border-color:#ead18b;background:#fff9e8}
 .metrics{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:7px}.metric{padding:9px;background:#f8fafb;border-radius:8px}.metric strong{display:block;font-size:19px}
 .currentJobs{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:8px}.currentJob{border:1px solid #dce3e8;border-left:5px solid #d71920;border-radius:8px;padding:9px;background:#fff}.currentJob.ready{border-left-color:#ffd400}.currentJob b,.currentJob span{display:block}.currentJob span{font-size:12px;color:var(--muted);margin-top:3px}@media(max-width:720px){#map{height:450px}.row{grid-template-columns:1fr}.metrics{grid-template-columns:1fr 1fr}label{min-width:100%}}
+.locationPrompt{position:fixed;inset:0;z-index:99999;background:rgba(10,28,44,.88);display:flex;align-items:center;justify-content:center;padding:20px}.locationPrompt[hidden]{display:none}.locationPromptCard{max-width:430px;background:#fff;border-radius:16px;padding:22px;text-align:center;box-shadow:0 12px 45px rgba(0,0,0,.35)}.locationPromptCard h2{margin:0 0 9px;color:#17324d}.locationPromptCard p{line-height:1.45;color:#455b6c}.locationPromptCard button{width:100%;background:#0b5fa5;color:#fff;border-color:#0b5fa5;font-weight:bold}.locationPromptCard small{display:block;margin-top:10px;color:#5d6c78}
 </style>
 </head>
 <body>
+<div id="locationPrompt" class="locationPrompt">
+ <div class="locationPromptCard">
+  <h2>Allow precise location</h2>
+  <p>The transit planner needs your live position to center the map and show your distance from stops and jobs.</p>
+  <button id="allowPreciseLocation" type="button">Allow precise location now</button>
+  <small>When Android or Chrome asks, choose Allow while using the app and turn on Precise location.</small>
+ </div>
+</div>
 <header><h1>Nashville Live Audit Transit Planner</h1><p>Original WeGo map restored. The current board contains only the 18 assignments verified from the latest recording.</p></header>
 <main>
 <div class="notice"><b>Original map restored:</b> use the route, itinerary section, and stop controls below for the detailed WeGo map. Live buses and alerts refresh every 30 seconds. The board contains only the latest 18 assignments.</div>
@@ -73,6 +82,7 @@ const lines=L.layerGroup().addTo(map), pins=L.layerGroup().addTo(map), busLayer=
 let myPosition=null,myLocationMarker=null,myAccuracyCircle=null,locationWatchId=null;
 function setLocationStatus(message){document.getElementById('locationStatus').textContent=message}
 function showLocation(position){
+ document.getElementById('locationPrompt').hidden=true;
  const lat=position.coords.latitude,lon=position.coords.longitude,accuracy=Math.round(position.coords.accuracy||0);
  myPosition=[lat,lon];
  if(myLocationMarker)locationLayer.removeLayer(myLocationMarker);
@@ -83,6 +93,7 @@ function showLocation(position){
  setLocationStatus('Live location on · accuracy about '+accuracy+' m · updated '+new Date().toLocaleTimeString());
 }
 function locationError(error){
+ document.getElementById('locationPrompt').hidden=false;
  const messages={1:'Location permission was denied. Open this site’s permissions in Chrome and allow Location.',2:'Your phone could not determine its location.',3:'Location timed out. Move near a window and try again.'};
  setLocationStatus(messages[error.code]||'Location is unavailable.');
 }
@@ -94,7 +105,16 @@ function startLocation(){
 }
 function centerOnMe(){if(myPosition)map.setView(myPosition,16)}
 document.getElementById('enableLocation').addEventListener('click',startLocation);
+document.getElementById('allowPreciseLocation').addEventListener('click',startLocation);
 document.getElementById('centerMe').addEventListener('click',centerOnMe);
+window.addEventListener('load',()=>{
+ setTimeout(()=>{
+  if(!myPosition&&navigator.geolocation){
+   setLocationStatus('Asking for precise location…');
+   navigator.geolocation.getCurrentPosition(showLocation,locationError,{enableHighAccuracy:true,maximumAge:0,timeout:20000});
+  }
+ },400);
+});
 
 const planSel=document.getElementById('plan'),sectionSel=document.getElementById('section'),viewSel=document.getElementById('view');
 Object.keys(D.plans).forEach(n=>{let o=document.createElement('option');o.value=n;o.textContent=n;planSel.appendChild(o)});
