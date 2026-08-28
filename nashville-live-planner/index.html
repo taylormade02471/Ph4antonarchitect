@@ -81,11 +81,11 @@ L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19,attribu
 const lines=L.layerGroup().addTo(map), pins=L.layerGroup().addTo(map), busLayer=L.layerGroup().addTo(map), locationLayer=L.layerGroup().addTo(map);
 const LOCATION_PREF_KEY='nashville_precise_location_enabled_v1';
 const MAP_SELECTION_KEY='nashville_original_map_selection_v1';
-let myPosition=null,myLocationMarker=null,myAccuracyCircle=null,locationWatchId=null;
+let myPosition=null,myLocationMarker=null,myAccuracyCircle=null,locationWatchId=null,locationPromptConfirmed=false;
 function setLocationStatus(message){document.getElementById('locationStatus').textContent=message}
 function showLocation(position){
  localStorage.setItem(LOCATION_PREF_KEY,'enabled');
- document.getElementById('locationPrompt').hidden=true;
+ if(locationPromptConfirmed||localStorage.getItem(LOCATION_PREF_KEY)==='enabled')document.getElementById('locationPrompt').hidden=true;
  const lat=position.coords.latitude,lon=position.coords.longitude,accuracy=Math.round(position.coords.accuracy||0);
  myPosition=[lat,lon];
  if(myLocationMarker)locationLayer.removeLayer(myLocationMarker);
@@ -109,16 +109,17 @@ function startLocation(){
 }
 function centerOnMe(){if(myPosition)map.setView(myPosition,16)}
 document.getElementById('enableLocation').addEventListener('click',startLocation);
-document.getElementById('allowPreciseLocation').addEventListener('click',startLocation);
+document.getElementById('allowPreciseLocation').addEventListener('click',()=>{locationPromptConfirmed=true;startLocation()});
 document.getElementById('centerMe').addEventListener('click',centerOnMe);
 window.addEventListener('load',()=>{
- setTimeout(()=>{
-  if(!myPosition&&navigator.geolocation){
-   const saved=localStorage.getItem(LOCATION_PREF_KEY)==='enabled';
-   setLocationStatus(saved?'Restoring saved precise location…':'Asking for precise location…');
-   navigator.geolocation.getCurrentPosition(showLocation,locationError,{enableHighAccuracy:true,maximumAge:0,timeout:20000});
-  }
- },400);
+ const saved=localStorage.getItem(LOCATION_PREF_KEY)==='enabled';
+ document.getElementById('locationPrompt').hidden=saved;
+ if(saved){
+  locationPromptConfirmed=true;
+  setTimeout(startLocation,400);
+ }else{
+  setLocationStatus('Tap “Allow precise location now” to open the Android or Chrome permission request.');
+ }
 });
 
 const planSel=document.getElementById('plan'),sectionSel=document.getElementById('section'),viewSel=document.getElementById('view');
