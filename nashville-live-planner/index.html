@@ -75,7 +75,7 @@ select,button{font-size:16px;padding:10px;border:1px solid #cbd5dd;border-radius
 const D=window.PLANNER_DATA;
 const currentJobs=document.getElementById('currentJobs');
 const esc=value=>String(value??'').replace(/[&<>"']/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
-currentJobs.innerHTML=Object.values(D.jobs||{}).map(function(job){var pay=job.pay_cents?'
+currentJobs.innerHTML=Object.values(D.jobs||{}).map(function(job){var pay=job.pay_cents?String.fromCharCode(36)+(job.pay_cents/100).toFixed(2):'';var ready=job.status==='assigned'?' ready':'';return '<div class="currentJob'+ready+'"><b>'+esc(job.title||job.name)+'</b><span>'+esc(job.location_name||'')+'</span><span>'+esc(job.address||'')+'</span><span>'+pay+' · '+esc(job.due||'')+'</span></div>';}).join('');
 const map=L.map('map').setView([36.16,-86.78],11);
 L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19,attribution:'© OpenStreetMap'}).addTo(map);
 const lines=L.layerGroup().addTo(map), pins=L.layerGroup().addTo(map), busLayer=L.layerGroup().addTo(map), locationLayer=L.layerGroup().addTo(map);
