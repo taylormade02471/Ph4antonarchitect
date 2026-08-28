@@ -79,9 +79,12 @@ currentJobs.innerHTML=Object.values(D.jobs||{}).map(job=>`<div class="currentJob
 const map=L.map('map').setView([36.16,-86.78],11);
 L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19,attribution:'© OpenStreetMap'}).addTo(map);
 const lines=L.layerGroup().addTo(map), pins=L.layerGroup().addTo(map), busLayer=L.layerGroup().addTo(map), locationLayer=L.layerGroup().addTo(map);
+const LOCATION_PREF_KEY='nashville_precise_location_enabled_v1';
+const MAP_SELECTION_KEY='nashville_original_map_selection_v1';
 let myPosition=null,myLocationMarker=null,myAccuracyCircle=null,locationWatchId=null;
 function setLocationStatus(message){document.getElementById('locationStatus').textContent=message}
 function showLocation(position){
+ localStorage.setItem(LOCATION_PREF_KEY,'enabled');
  document.getElementById('locationPrompt').hidden=true;
  const lat=position.coords.latitude,lon=position.coords.longitude,accuracy=Math.round(position.coords.accuracy||0);
  myPosition=[lat,lon];
@@ -98,6 +101,7 @@ function locationError(error){
  setLocationStatus(messages[error.code]||'Location is unavailable.');
 }
 function startLocation(){
+ localStorage.setItem(LOCATION_PREF_KEY,'enabled');
  if(!navigator.geolocation){setLocationStatus('This browser does not support location. Open the HTTPS site in Chrome.');return}
  if(locationWatchId!==null)navigator.geolocation.clearWatch(locationWatchId);
  setLocationStatus('Requesting precise location permission…');
@@ -110,7 +114,8 @@ document.getElementById('centerMe').addEventListener('click',centerOnMe);
 window.addEventListener('load',()=>{
  setTimeout(()=>{
   if(!myPosition&&navigator.geolocation){
-   setLocationStatus('Asking for precise location…');
+   const saved=localStorage.getItem(LOCATION_PREF_KEY)==='enabled';
+   setLocationStatus(saved?'Restoring saved precise location…':'Asking for precise location…');
    navigator.geolocation.getCurrentPosition(showLocation,locationError,{enableHighAccuracy:true,maximumAge:0,timeout:20000});
   }
  },400);
@@ -222,8 +227,22 @@ if(navigator.permissions&&navigator.permissions.query){
   else if(result.state==='denied')setLocationStatus('Location is blocked. In Chrome, open Site settings → Location → Allow.');
  }).catch(()=>{});
 }
-planSel.addEventListener('change',fillSections);sectionSel.addEventListener('change',fillViews);viewSel.addEventListener('change',render);document.getElementById('refresh').addEventListener('click',refreshLive);
-planSel.value='Plan C — West + North/East';fillSections();refreshLive();setInterval(refreshLive,30000);
+function saveMapSelection(){
+ localStorage.setItem(MAP_SELECTION_KEY,JSON.stringify({plan:planSel.value,section:sectionSel.value,view:viewSel.value}));
+}
+function restoreMapSelection(){
+ try{
+  const saved=JSON.parse(localStorage.getItem(MAP_SELECTION_KEY)||'{}');
+  if(saved.plan&&Array.from(planSel.options).some(option=>option.value===saved.plan))planSel.value=saved.plan;
+  fillSections();
+  if(saved.section&&Array.from(sectionSel.options).some(option=>option.value===saved.section))sectionSel.value=saved.section;
+  fillViews();
+  if(saved.view&&Array.from(viewSel.options).some(option=>option.value===saved.view))viewSel.value=saved.view;
+ }catch{}
+ render();
+}
+planSel.addEventListener('change',()=>{fillSections();saveMapSelection()});sectionSel.addEventListener('change',()=>{fillViews();saveMapSelection()});viewSel.addEventListener('change',()=>{saveMapSelection();render()});document.getElementById('refresh').addEventListener('click',refreshLive);
+planSel.value='Plan C — West + North/East';restoreMapSelection();refreshLive();setInterval(refreshLive,30000);
 </script>
 </body>
 </html>+(job.pay_cents/100).toFixed(2):''} · ${esc(job.due||'')}</span></div>`).join('');
