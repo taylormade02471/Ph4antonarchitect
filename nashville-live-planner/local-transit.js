@@ -94,7 +94,7 @@
     } catch (error) {}
   }
 
-  function drivingUrl(leg, legs.indexOf(leg)) {
+  function drivingUrl(leg, index) {
     const destination = leg.alight_stop.lat + "," + leg.alight_stop.lon;
     let url = "https://www.google.com/maps/dir/?api=1&destination=" +
       encodeURIComponent(destination) + "&travelmode=driving&dir_action=navigate";
