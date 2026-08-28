@@ -26,7 +26,7 @@ select,button{font-size:16px;padding:10px;border:1px solid #cbd5dd;border-radius
 <div id="locationPrompt" class="locationPrompt">
  <div class="locationPromptCard">
   <h2>Allow precise location</h2>
-  <p>The transit planner needs your live position to center the map and show your distance from stops and jobs.</p>
+  <p>The transit planner needs your live position to start every route, find local public transit, and show your distance from stops and jobs.</p>
   <button id="allowPreciseLocation" type="button">Allow precise location now</button>
   <small>When Android or Chrome asks, choose Allow while using the app and turn on Precise location.</small>
  </div>
@@ -64,6 +64,7 @@ select,button{font-size:16px;padding:10px;border:1px solid #cbd5dd;border-radius
 
 <div class="card"><div id="details"></div></div>
 <div class="card"><div id="map"></div><p style="font-size:12px;color:var(--muted)">Yellow/orange circles are actual live WeGo buses only when the realtime feed assigns the vehicle to a route used by the selected planned leg(s). Pins are only boarding/get-off points used by your plan.</p></div>
+<div class="card"><h3>Regional public transit along this plan</h3><div id="regionalTransitStatus" class="status">Allow precise location to load transit for the route.</div><div id="regionalTransit"></div><p style="font-size:12px;color:var(--muted)">Only city-area coordinates are used for discovery. Loaded regions use a 10-mile search radius and are saved on this phone for six hours.</p></div>
 <div class="card"><h3>Live buses on selected route piece(s)</h3><div id="buses"></div></div>
 <div class="card"><h3>Live alerts affecting selected route piece(s)</h3><div id="alerts"></div><p><a target="_blank" href="https://www.wegotransit.com/ride/alerts/">Official WeGo alerts</a> · <a target="_blank" href="https://www.wegotransit.com/routes/">WeGo Bus Arrival Info</a></p></div>
 </main>
@@ -72,6 +73,7 @@ select,button{font-size:16px;padding:10px;border:1px solid #cbd5dd;border-radius
 <script src="./planner-data.js"></script>
 <script src="./accepted-jobs.js"></script>
 <script src="./job-plan-builder.js"></script>
+<script src="./local-transit.js"></script>
 <script>
 const D=window.PLANNER_DATA;
 window.JobPlanBuilder.apply(D);
@@ -89,6 +91,7 @@ document.getElementById('createSelectedRoute').addEventListener('click',()=>{
  planSel.value='Selected jobs — Custom route';
  fillSections();
  saveMapSelection();
+ if(myPosition)window.LocalTransit.load(D,planSel.value,myPosition,transitLayer);
  document.getElementById('jobRefreshStatus').textContent='Custom route created from '+ids.length+' selected current job(s).';
  document.getElementById('map').scrollIntoView({behavior:'smooth',block:'center'});
 });
@@ -100,7 +103,7 @@ document.getElementById('refreshJobs').addEventListener('click',()=>{
 });
 const map=L.map('map').setView([36.16,-86.78],11);
 L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19,attribution:'© OpenStreetMap'}).addTo(map);
-const lines=L.layerGroup().addTo(map), pins=L.layerGroup().addTo(map), busLayer=L.layerGroup().addTo(map), locationLayer=L.layerGroup().addTo(map);
+const lines=L.layerGroup().addTo(map), pins=L.layerGroup().addTo(map), busLayer=L.layerGroup().addTo(map), transitLayer=L.layerGroup().addTo(map), locationLayer=L.layerGroup().addTo(map);
 const LOCATION_PREF_KEY='nashville_precise_location_enabled_v1';
 const MAP_SELECTION_KEY='nashville_original_map_selection_v1';
 let myPosition=null,myLocationMarker=null,myAccuracyCircle=null,locationWatchId=null,locationPromptConfirmed=false;
@@ -115,6 +118,7 @@ function showLocation(position){
  planSel.value=Array.from(planSel.options).some(option=>option.value===activePlan)?activePlan:(Object.keys(D.plans||{})[0]||'');
  fillSections();
  saveMapSelection();
+ window.LocalTransit.load(D,planSel.value,myPosition,transitLayer);
  if(myLocationMarker)locationLayer.removeLayer(myLocationMarker);
  if(myAccuracyCircle)locationLayer.removeLayer(myAccuracyCircle);
  myAccuracyCircle=L.circle(myPosition,{radius:accuracy,color:'#0b5fa5',weight:1,fillColor:'#0b5fa5',fillOpacity:.08}).addTo(locationLayer);
@@ -269,7 +273,7 @@ function restoreMapSelection(){
  }catch{}
  render();
 }
-planSel.addEventListener('change',()=>{fillSections();saveMapSelection()});sectionSel.addEventListener('change',()=>{fillViews();saveMapSelection()});viewSel.addEventListener('change',()=>{saveMapSelection();render()});document.getElementById('refresh').addEventListener('click',refreshLive);
+planSel.addEventListener('change',()=>{fillSections();saveMapSelection();if(myPosition)window.LocalTransit.load(D,planSel.value,myPosition,transitLayer)});sectionSel.addEventListener('change',()=>{fillViews();saveMapSelection()});viewSel.addEventListener('change',()=>{saveMapSelection();render()});document.getElementById('refresh').addEventListener('click',()=>{refreshLive();if(myPosition)window.LocalTransit.load(D,planSel.value,myPosition,transitLayer)});
 planSel.value=Object.keys(D.plans||{})[0]||'';restoreMapSelection();refreshLive();setInterval(refreshLive,30000);
 </script>
 </body>
