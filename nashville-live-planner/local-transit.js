@@ -159,7 +159,7 @@
     const fallbackHtml = fallbackLegs.map(function (leg, index) {
       return '<div class="alert"><b>No public transit found for this job area.</b><br>' +
         escapeHtml(leg.destination) + '<br><a target="_blank" rel="noopener" href="' +
-        drivingUrl(leg, index) + '">Open best driving directions</a></div>';
+        drivingUrl(leg, legs.indexOf(leg)) + '">Open best driving directions</a></div>';
     }).join("");
 
     panel.innerHTML =
