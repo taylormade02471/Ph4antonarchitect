@@ -33,7 +33,7 @@ select,button{font-size:16px;padding:10px;border:1px solid #cbd5dd;border-radius
 </div>
 <header><h1>Nashville Live Audit Transit Planner</h1><p>Original WeGo map restored. The current board contains only the 18 assignments verified from the latest recording.</p></header>
 <main>
-<div class="notice"><b>Original map restored:</b> use the route, itinerary section, and stop controls below for the detailed WeGo map. Live buses and alerts refresh every 30 seconds. The board contains only the latest 18 assignments.</div>
+<div class="notice"><b>Complete WeGo network routing:</b> selected jobs are reordered for the most efficient transit path using local, frequent, crosstown, connector, shuttle, express, and WeGo Star connections. Live buses and alerts refresh every 30 seconds.</div>
 
 <div class="card metrics">
  <div class="metric">Current jobs<strong id="currentJobCount">0</strong><span>Newest published board</span></div>
@@ -41,7 +41,7 @@ select,button{font-size:16px;padding:10px;border:1px solid #cbd5dd;border-radius
  <div class="metric">Ready to Start<strong id="readyJobCount">0</strong><span>Assigned active work</span></div>
  <div class="metric">Provider apps<strong>4</strong><span>All choices retained</span></div>
 </div>
-<div class="card"><h3>Current assignment board</h3><button id="refreshJobs" type="button">Refresh Jobs</button><button id="createSelectedRoute" type="button">Create route from selected jobs</button><span id="jobRefreshStatus" class="status">Showing the newest published active jobs.</span><div id="currentJobs" class="currentJobs"></div></div>
+<div class="card"><h3>Current assignment board</h3><button id="refreshJobs" type="button">Refresh Jobs</button><button id="createSelectedRoute" type="button">Create optimized WeGo route from selected jobs</button><span id="jobRefreshStatus" class="status">Showing the newest published active jobs.</span><div id="currentJobs" class="currentJobs"></div></div>
 
 <div class="card">
  <div class="controls">
@@ -88,11 +88,11 @@ document.getElementById('createSelectedRoute').addEventListener('click',()=>{
  const ids=Array.from(document.querySelectorAll('.jobRouteChoice:checked')).map(input=>input.value);
  if(!ids.length){document.getElementById('jobRefreshStatus').textContent='Select at least one job first.';return}
  window.JobPlanBuilder.setSelected(D,ids,myPosition);
- planSel.value='Selected jobs — Custom route';
+ planSel.value='Selected jobs — Optimized WeGo route';
  fillSections();
  saveMapSelection();
  if(myPosition)window.LocalTransit.load(D,planSel.value,myPosition,transitLayer);
- document.getElementById('jobRefreshStatus').textContent='Custom route created from '+ids.length+' selected current job(s).';
+ document.getElementById('jobRefreshStatus').textContent='Optimized '+ids.length+' selected job(s) across all '+(D.networkSummary?.routeCount||37)+' WeGo services and '+(D.networkSummary?.routeStopCount||970)+' route stops.';
  document.getElementById('map').scrollIntoView({behavior:'smooth',block:'center'});
 });
 document.getElementById('refreshJobs').addEventListener('click',()=>{
@@ -224,13 +224,13 @@ function render(){
  let lastSection=null;
  for(const l of legs){
   if(l._section!==lastSection){details.push(`<div class="sectionTitle">${l._sectionNo}. ${D.sections[l._section].title}</div>`);lastSection=l._section}
-  const c=l.route==='walk'||l.route==='link'?'#666':(D.routeColors[l.route]||'#333');
-  if(l.route!=='walk'&&l.route!=='link'){L.polyline(l.segment,{color:c,weight:7,opacity:.9}).addTo(lines);l.segment.forEach(p=>bounds.push(p));routesUsed.add(l.route)}
+  const c=l.route==='walk'||l.route==='link'||l.route==='drive'?'#666':(D.routeColors[l.route]||'#333');
+  if(l.route!=='walk'&&l.route!=='link'&&l.route!=='drive'){L.polyline(l.segment,{color:c,weight:7,opacity:.9}).addTo(lines);l.segment.forEach(p=>bounds.push(p));routesUsed.add(l.route)}else if(l.segment){L.polyline(l.segment,{color:c,weight:4,opacity:.65,dashArray:'7 7'}).addTo(lines);l.segment.forEach(p=>bounds.push(p))}
   const b=[l.board_stop.lat,l.board_stop.lon],a=[l.alight_stop.lat,l.alight_stop.lon];bounds.push(b,a);
   L.marker(b).bindPopup(`<b>BOARD / START</b><br>${l.board_stop.name}<br>Stop ${l.board}<br>${l.label}`).addTo(pins);
   L.marker(a).bindPopup(`<b>GET OFF / END</b><br>${l.alight_stop.name}<br>Stop ${l.alight}<br><b>Destination:</b> ${l.destination}`).addTo(pins);
   const klass=l.label.toLowerCase().includes('route change')||l._section==='return'?'change':'leg';
-  details.push(`<div class="${klass}"><div><span class="badge" style="background:${c}">${l.route==='walk'?'WALK':l.route==='link'?'WEGO LINK':'Route '+l.route}</span><b>${l.label}</b></div><div class="row"><b>STATIC PLAN</b><span class="time">${l.static}</span></div><div class="row"><b>BOARD / START</b><span>${l.board_stop.name} [${l.board}]</span></div><div class="row"><b>GET OFF / END</b><span>${l.alight_stop.name} [${l.alight}]</span></div><div class="row"><b>DESTINATION</b><span>${l.destination}</span></div></div>`);
+  details.push(`<div class="${klass}"><div><span class="badge" style="background:${c}">${l.route==='walk'?'WALK / TRANSFER':l.route==='link'?'WEGO LINK':l.route==='drive'?'DRIVING FALLBACK':'Route '+l.route}</span><b>${l.label}</b></div><div class="row"><b>STATIC PLAN</b><span class="time">${l.static}</span></div><div class="row"><b>BOARD / START</b><span>${l.board_stop.name} [${l.board}]</span></div><div class="row"><b>GET OFF / END</b><span>${l.alight_stop.name} [${l.alight}]</span></div><div class="row"><b>DESTINATION</b><span>${l.destination}</span></div></div>`);
  }
  document.getElementById('details').innerHTML=details.join('')||'No route selected.';
  if(bounds.length)map.fitBounds(bounds,{padding:[35,35]});
